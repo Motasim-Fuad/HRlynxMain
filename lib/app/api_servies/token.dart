@@ -64,6 +64,23 @@ class TokenStorage {
     return prefs.getString(_resetRefreshTokenKey);
   }
 
+  /// ===== Store selected persona Id =======
+  static const _selectedPersonaIdKey = 'selected_persona_id';
+
+  static Future<void> saveSelectedPersonaId(int personaId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_selectedPersonaIdKey, personaId);
+  }
+
+  static Future<int?> getSelectedPersonaId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_selectedPersonaIdKey);
+  }
+
+  static Future<void> clearSelectedPersonaId() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_selectedPersonaIdKey);
+  }
 
   /// ===== STORE PERSONA SESSION ID  =====
   static String _personaSessionKey(int personaId) => 'session_persona_$personaId';
@@ -78,7 +95,6 @@ class TokenStorage {
     return prefs.getString(_personaSessionKey(personaId));
   }
 
-
   static Future<bool> hasPersonaSession(int personaId) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.containsKey(_personaSessionKey(personaId));
@@ -92,7 +108,6 @@ class TokenStorage {
   }
 
   //Clear login token
-
   static Future<void> clearLoginTokens() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_loginAccessTokenKey);
@@ -108,5 +123,6 @@ class TokenStorage {
     await prefs.remove(_otpRefreshTokenKey);
     await prefs.remove(_resetAccessTokenKey);
     await prefs.remove(_resetRefreshTokenKey);
+    await prefs.remove(_selectedPersonaIdKey);
   }
 }

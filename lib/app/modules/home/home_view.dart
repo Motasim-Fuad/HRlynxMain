@@ -1,13 +1,12 @@
-
 import 'package:cached_network_image/cached_network_image.dart' show CachedNetworkImage;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hr/app/modules/home/user_isSubcriptionController.dart' show UserIsSubcribedController;
+import 'package:hr/app/modules/onboarding/onboarding_controller.dart';
 import 'package:hr/app/modules/profile/profile_controller.dart';
-import '../../common_widgets/customtooltip.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_images.dart';
 import '../../modules/news/news_view.dart';
-
 import 'chat_al_ai_persona_controller.dart';
 
 class HomeView extends StatelessWidget {
@@ -15,7 +14,13 @@ class HomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+
     final ProfileController profileController = Get.put(ProfileController());
+    final UserIsSubcribedController is_SubcribedController = Get.put(UserIsSubcribedController());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      is_SubcribedController.fetchIsSubcriptionData();
+    });
     final controller = Get.put(ChatAllAiPersona());
     final size = MediaQuery.of(context).size;
 
@@ -59,7 +64,7 @@ class HomeView extends StatelessWidget {
               children: [
                 // --- Breaking HR News Card ---
                 Container(
-                  height: size.height * 0.25,
+                  height: size.height * 0.30,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
@@ -148,6 +153,9 @@ class HomeView extends StatelessWidget {
                   if (controller.personaList.isEmpty) {
                     return const Center(child: Text('No personas available'));
                   }
+                  print("subcription value :::::::::::${is_SubcribedController.isSubscribed.value}");
+                  print("subcription value :::::::::::${is_SubcribedController.selectedPersona.value?.id}");
+
 
                   return GridView.builder(
                     shrinkWrap: true,
@@ -161,13 +169,26 @@ class HomeView extends StatelessWidget {
                     itemCount: controller.personaList.length,
                     itemBuilder: (context, index) {
                       final persona = controller.personaList[index];
+
+                      // Determine if persona is active based on subscription logic
+                      bool isPersonaActive;
+                      if(is_SubcribedController.isSubscribed.value == true) {
+                        // sob gula active thakba
+                        isPersonaActive = true;
+                      } else {
+                        // sudu jaita selected oi ta active thakba, baki gula de active thakba
+                        isPersonaActive = is_SubcribedController.selectedPersona.value?.id == persona.id;
+                      }
+
                       return GestureDetector(
                         onTap: () async {
-                          await controller.startChatSession(persona);
+                          if (isPersonaActive) {
+                            await controller.startChatSession(persona);
+                          }
                         },
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: isPersonaActive ? Colors.teal : Colors.grey,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: Colors.grey.shade300),
                             boxShadow: [
@@ -183,17 +204,34 @@ class HomeView extends StatelessWidget {
                             children: [
                               ClipRRect(
                                 borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(12),
-                                  topRight: Radius.circular(12),
+                                  topLeft: Radius.circular(10),
+                                  topRight: Radius.circular(10),
                                 ),
                                 child: AspectRatio(
                                   aspectRatio: 1, // Keeps image square like in screenshot
-                                  child: CachedNetworkImage(
-                                    imageUrl: "${persona.avatar}",
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-                                    errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                                  child: Stack(
+                                    children: [
+                                      CachedNetworkImage(
+                                        imageUrl: "${persona.avatar}",
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                                        errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                                      ),
+                                      if (!isPersonaActive)
+                                        Positioned.fill(
+                                          child: Container(
+                                            color: Colors.black54,
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.lock,
+                                                color: Colors.white,
+                                                size: 30,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -202,10 +240,10 @@ class HomeView extends StatelessWidget {
                                 child: Text(
                                   persona.title ?? 'No Title',
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
+                                    color: isPersonaActive ? Colors.white : Colors.white70,
                                   ),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:hr/app/api_servies/repository/news_repo.dart';
 import 'package:hr/app/modules/news/news_controller.dart';
 import 'package:hr/app/utils/app_colors.dart';
+import 'package:hr/app/utils/app_images.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 // Using Intent for Android sharing
@@ -415,7 +416,7 @@ class _NewsDetailsViewState extends State<NewsDetailsView> {
                         return Container(
                           height: 200,
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.grey[300]!),
                           ),
@@ -423,19 +424,22 @@ class _NewsDetailsViewState extends State<NewsDetailsView> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.image_not_supported_outlined,
-                                  size: 40,
-                                  color: Colors.grey[400],
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'Image not available',
-                                  style: TextStyle(
-                                    color: Colors.grey[500],
-                                    fontSize: 12,
-                                  ),
-                                ),
+
+                               Image(image: AssetImage(AppImages.default_news_img),height: 198,width: double.infinity,)
+
+                                // Icon(
+                                //   Icons.image_not_supported_outlined,
+                                //   size: 40,
+                                //   color: Colors.grey[400],
+                                // ),
+                                // SizedBox(height: 8),
+                                // Text(
+                                //   'Image not available',
+                                //   style: TextStyle(
+                                //     color: Colors.grey[500],
+                                //     fontSize: 12,
+                                //   ),
+                                // ),
                               ],
                             ),
                           ),

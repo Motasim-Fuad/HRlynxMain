@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:hr/app/modules/main_screen/main_screen_controller.dart';
 import 'package:hr/app/modules/news/news_controller.dart';
 import 'package:hr/app/utils/app_colors.dart';
+import 'package:hr/app/utils/app_images.dart';
 
 import 'news_detail/news_detail_page_view.dart';
 
@@ -132,25 +133,6 @@ class NewsView extends StatelessWidget {
 
 
             SizedBox(height: 20,),
-
-            // Selected Tag Chip (if any)
-            // Obx(() => controller.selectedTag.value != null
-            //     ? Padding(
-            //   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            //   child: Row(
-            //     children: [
-            //       Chip(
-            //         label: Text(controller.selectedTag.value!['name'] ?? ''),
-            //         onDeleted: () {
-            //           controller.clearTagFilter();
-            //         },
-            //       ),
-            //     ],
-            //   ),
-            // )
-            //     : SizedBox.shrink()),
-
-            // Articles List
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value && controller.articles.isEmpty) {
@@ -295,10 +277,7 @@ class NewsView extends StatelessWidget {
                                             color: Colors.grey[300],
                                             borderRadius: BorderRadius.circular(8),
                                           ),
-                                          child: Icon(
-                                            Icons.image_not_supported,
-                                            color: Colors.grey[600],
-                                          ),
+                                          child: Image(image: AssetImage(AppImages.default_news_img),fit: BoxFit.cover,)
                                         );
                                       },
                                     )

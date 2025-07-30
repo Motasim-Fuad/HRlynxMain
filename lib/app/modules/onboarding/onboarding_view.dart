@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hr/app/api_servies/token.dart';
 import 'package:hr/app/common_widgets/button.dart' show Button;
 import 'package:hr/app/common_widgets/hr_select.dart';
 import 'package:hr/app/modules/log_in/log_in_view.dart';
@@ -85,10 +86,18 @@ class OnboardingView extends StatelessWidget {
             ),
 
 
-              Button(title: 'Next',onTap: () {
+              Button(title: 'Next',onTap: () async  {
                 // Example: save selected persona to memory
                 final selectedPersona = controller.personaList[controller.selectedIndex.value];
-                print("Selected: ${selectedPersona.title}");
+                print(" ########Selected ai persona ### : ${selectedPersona.title}");
+                print(" ########Selected ai persona ### : ${selectedPersona.id}");
+
+
+                // Save selected persona ID to storage
+                if (selectedPersona.id != null) {
+                  await TokenStorage.saveSelectedPersonaId(selectedPersona.id!);
+                  print("✅ Saved persona ID ${selectedPersona.id} to storage");
+                }
 
                 Get.to(() => LogInView());
               },),

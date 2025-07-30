@@ -114,9 +114,6 @@ class AuthRepository {
       final refresh = data['refresh'];
 
       await TokenStorage.saveLoginTokens(access, refresh);
-
-      await setParsonaType(personaBody); // uses login token
-
       return true;
     } catch (e) {
       print('❌ googleSignUpAndSetPersona Error: $e');
@@ -256,50 +253,6 @@ class AuthRepository {
 
 
 
-
-
-  // ---------- Subscription ----------
-  // Future<dynamic> createSetupIntent() async {
-  //   String url = "${ApiConstants.baseUrl}/api/subscription/payment/setup-intent/";
-  //   return await NetworkApiServices.postApi(url, {}, withAuth: true, tokenType: 'login');
-  // }
-  //
-  // Future<dynamic> addPaymentMethod(String paymentMethodId) async {
-  //   String url = "${ApiConstants.baseUrl}/api/subscription/payment/add-method/";
-  //   final body = {
-  //     "payment_method_id": paymentMethodId,
-  //   };
-  //   return await NetworkApiServices.postApi(url, body, withAuth: true, tokenType: 'login');
-  // }
-  //
-  // Future<dynamic> createSubscription(String planType, String paymentMethodId) async {
-  //   String url = "${ApiConstants.baseUrl}/api/subscription/create/";
-  //   final body = {
-  //     "plan_type": planType,
-  //     "payment_method_id": paymentMethodId,
-  //   };
-  //   return await NetworkApiServices.postApi(url, body, withAuth: true, tokenType: 'login');
-  // }
-  //
-  // Future<Map<String, dynamic>?> checkExistingPlans() async {
-  //   try {
-  //     String url = "${ApiConstants.baseUrl}/api/subscription/setup/check-plans/";
-  //     final response = await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
-  //     return response;
-  //   } catch (e) {
-  //     print('❌ Error checking existing plans: $e');
-  //     return null;
-  //   }
-  // }
-  // Future<dynamic> checkSubscriptionStatus() async {
-  //   String url = "${ApiConstants.baseUrl}/api/subscription/status/";
-  //   return await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
-  // }
-
-
-
-
-
 // ---------- Subscription & Payment Methods ----------
   Future<dynamic> createSetupIntent() async {
     try {
@@ -433,6 +386,17 @@ class AuthRepository {
     }
   }
 
+
+
+  Future<dynamic> fetchUserIsSubcribed() async {
+    try {
+      String url = "${ApiConstants.baseUrl}/api/aipersona/available-personas/";
+      return await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
+    } catch (e) {
+      print('❌ Error is_subcribed auth method : $e');
+      return null;
+    }
+  }
 
 
 }

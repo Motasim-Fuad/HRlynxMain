@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hr/app/modules/payment/payment_view.dart';
 import '../../api_servies/repository/auth_repo.dart';
 import '../../api_servies/token.dart';
 import '../../model/onbordingModel.dart';
@@ -93,36 +94,26 @@ class OtpController extends GetxController {
   Future<void> submitSelectedPersona() async {
     try {
       isLoading.value = true;
-      final token = await TokenStorage.getOtpAccessToken();
-      print("🔐 Injecting Token: $token");
 
-      if (token == null || token.isEmpty) {
-        Get.snackbar("Error", "Token is missing. Please login again.");
-        return;
-      }
+      // Get the stored persona ID from onboarding
+      final storedPersonaId = await TokenStorage.getSelectedPersonaId();
 
-      if (personaList.isEmpty) {
-        Get.snackbar("Error", "No personas available.");
-        return;
-      }
-
-      final selectedPersona = personaList[selectedIndex.value];
-      if (selectedPersona.id == null) {
-        Get.snackbar("Error", "Invalid persona selection.");
+      if (storedPersonaId == null) {
+        Get.snackbar("Error", "No persona selected in onboarding.");
         return;
       }
 
       final body = {
-        "persona": selectedPersona.id,
+        "persona": storedPersonaId, // Use stored ID instead of current selection
       };
 
-      print("📤 Sending to Persona API: $body");
+      print("📤 Sending stored persona ID to API: $body");
 
       final response = await _authRepo.setParsonaType(body);
 
       if (response['status'] == true || response['success'] == true) {
         print("✅ Persona selection success: ${response['message']}");
-        Get.offAll(() => LogInView());
+        Get.offAll(() => PaymentView());
       } else {
         print("❌ Persona API error: ${response['message']}");
         Get.snackbar("Error", response['message'] ?? "Failed to select persona");
