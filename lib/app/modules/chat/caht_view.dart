@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hr/app/modules/chat/voice_service_controller.dart';
 import 'package:hr/app/modules/chat/widget/sessionTitle.dart' show SessionHistoryTile;
 import 'package:intl/intl.dart';
 
@@ -167,6 +168,7 @@ class ChatView extends StatelessWidget {
 
     final chatController = Get.find<ChatController>(tag: controllerTag);
     final tooltipCtrl = Get.put(ChatTooltipController());
+    final voiceService = Get.put(VoiceService());
 
     return Obx(() {
       final session = chatController.session.value;
@@ -432,9 +434,68 @@ class ChatView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  IconButton(onPressed: (){
+                  Obx(() {
+                    if (voiceService.isRecording.value) {
+                      // Show recording state
+                      return GestureDetector(
+                        onTap: () async {
+                          final convertedText = await voiceService.stopRecordingAndProcess();
+                          if (convertedText != null && convertedText.trim().isNotEmpty) {
+                            // Set the converted text to your text controller
+                            textController.text = convertedText;
+                            textController.selection = TextSelection.fromPosition(
+                              TextPosition(offset: textController.text.length),
+                            );
 
-                  }, icon: Icon(Icons.mic)),
+                            // Optionally auto-send the message
+                            // chatController.send(convertedText);
+                            // textController.clear();
+                          }
+                        },
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.stop,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                      );
+                    } else if (voiceService.isProcessing.value) {
+                      // Show processing state
+                      return Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        ),
+                      );
+                    } else {
+                      // Show normal mic button
+                      return IconButton(
+                        onPressed: () async {
+                          final started = await voiceService.startRecording();
+                          if (!started) {
+                            Get.snackbar("Error", "Could not start recording");
+                          }
+                        },
+                        icon: Icon(Icons.mic),
+                      );
+                    }
+                  }),
                   IconButton(
                     icon: const Icon(Icons.send),
                     onPressed: () {
