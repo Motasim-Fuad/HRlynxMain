@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hr/app/common_widgets/button.dart' show Button;
@@ -16,15 +15,45 @@ class PasswordController extends GetxController {
   }
 }
 
-class SignUp extends StatelessWidget {
+class SignUp extends StatefulWidget {
   SignUp({super.key});
 
-  final PasswordController passwordcontroller = Get.put(PasswordController());
-  final SignUpController signUpController = Get.put(SignUpController());
+  @override
+  State<SignUp> createState() => _SignUpState();
+}
+
+class _SignUpState extends State<SignUp> {
+  late PasswordController passwordcontroller;
+  late SignUpController signUpController;
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Clean up existing controllers if they exist
+    if (Get.isRegistered<PasswordController>()) {
+      Get.delete<PasswordController>();
+    }
+    if (Get.isRegistered<SignUpController>()) {
+      Get.delete<SignUpController>();
+    }
+
+    // Create fresh controllers
+    passwordcontroller = Get.put(PasswordController(), permanent: false);
+    signUpController = Get.put(SignUpController(), permanent: false);
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -186,7 +215,12 @@ class SignUp extends StatelessWidget {
                             children: [
                               const Text('Already have an account?'),
                               TextButton(
-                                onPressed: () => Get.to(LogInView()),
+                                onPressed: () {
+                                  // Clean up current controllers before navigating
+                                  Get.delete<PasswordController>();
+                                  Get.delete<SignUpController>();
+                                  Get.to(() => LogInView());
+                                },
                                 child: Text(
                                   'Log In',
                                   style: TextStyle(color: AppColors.primarycolor),
@@ -222,5 +256,3 @@ class SignUp extends StatelessWidget {
     );
   }
 }
-
-

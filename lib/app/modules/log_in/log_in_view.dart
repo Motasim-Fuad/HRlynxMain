@@ -12,14 +12,36 @@ import 'package:hr/app/utils/app_images.dart';
 
 import 'googleSingUpController.dart';
 
-class LogInView extends StatelessWidget {
+class LogInView extends StatefulWidget {
   const LogInView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.put(LogInController());
-    final googleSignUpController = Get.put(GoogleSignUpController());
+  State<LogInView> createState() => _LogInViewState();
+}
 
+class _LogInViewState extends State<LogInView> {
+  late LogInController controller;
+  late GoogleSignUpController googleSignUpController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Clean up existing controllers if they exist
+    if (Get.isRegistered<LogInController>()) {
+      Get.delete<LogInController>();
+    }
+    if (Get.isRegistered<GoogleSignUpController>()) {
+      Get.delete<GoogleSignUpController>();
+    }
+
+    // Create fresh controllers
+    controller = Get.put(LogInController(), permanent: false);
+    googleSignUpController = Get.put(GoogleSignUpController(), permanent: false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
 
     return Scaffold(
@@ -92,7 +114,7 @@ class LogInView extends StatelessWidget {
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () => Get.to(ForgetPassword()),
+                          onPressed: () => Get.to(() => ForgetPassword()),
                           child: Text(
                             'Forgot Password?',
                             style: TextStyle(
@@ -121,7 +143,7 @@ class LogInView extends StatelessWidget {
                               children: [
                                 const Text('I agree to the '),
                                 GestureDetector(
-                                  onTap: () => Get.to(TermsOfUse()),
+                                  onTap: () => Get.to(() => TermsOfUse()),
                                   child: Text(
                                     'Terms of Use',
                                     style: TextStyle(
@@ -133,7 +155,7 @@ class LogInView extends StatelessWidget {
                                 ),
                                 const Text(' and '),
                                 GestureDetector(
-                                  onTap: () => Get.to(PrivacyPolicy()),
+                                  onTap: () => Get.to(() => PrivacyPolicy()),
                                   child: Text(
                                     'Privacy Policy.',
                                     style: TextStyle(
@@ -165,7 +187,12 @@ class LogInView extends StatelessWidget {
                         children: [
                           const Text("Don't have an account?"),
                           TextButton(
-                            onPressed: () => Get.to(SignUp()),
+                            onPressed: () {
+                              // Clean up current controllers before navigating
+                              Get.delete<LogInController>();
+                              Get.delete<GoogleSignUpController>();
+                              Get.to(() => SignUp());
+                            },
                             child: Text(
                               'Sign Up',
                               style: TextStyle(color: AppColors.primarycolor),

@@ -1,4 +1,3 @@
-// Updated LogInController
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hr/app/api_servies/notification_services.dart';
@@ -16,7 +15,25 @@ class LogInController extends GetxController {
   final isObscured = true.obs;
   final isChecked = false.obs;
   final isLoading = false.obs;
-  final formKey = GlobalKey<FormState>();
+
+  // Generate a unique key each time
+  late final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+  @override
+  void onInit() {
+    super.onInit();
+    // Clear form when controller is initialized
+    emailController.clear();
+    passwordController.clear();
+    isChecked.value = false;
+  }
+
+  @override
+  void onClose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.onClose();
+  }
 
   void toggleObscureText() {
     isObscured.value = !isObscured.value;
@@ -49,10 +66,7 @@ class LogInController extends GetxController {
 
       if (access != null && refresh != null) {
         await TokenStorage.saveLoginTokens(access, refresh);
-
-        // Initialize notification service after successful login
         await initializeNotificationService();
-
         Get.snackbar("Success", response['message'] ?? "Login successful");
         Get.to(() => MainScreen());
       } else {
@@ -65,18 +79,13 @@ class LogInController extends GetxController {
     }
   }
 
-  // Initialize notification service
   Future<void> initializeNotificationService() async {
     try {
-      // Register notification service if not already registered
       if (!Get.isRegistered<NotificationService>()) {
         Get.put(NotificationService());
       }
-
-      // Get instance and enable connection
       final notificationService = NotificationService.instance;
       await notificationService.enableConnection();
-
       print('✅ Notification service initialized successfully');
     } catch (e) {
       print('❌ Error initializing notification service: $e');
