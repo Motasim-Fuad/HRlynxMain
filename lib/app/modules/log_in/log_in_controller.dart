@@ -28,13 +28,6 @@ class LogInController extends GetxController {
     isChecked.value = false;
   }
 
-  @override
-  void onClose() {
-    emailController.dispose();
-    passwordController.dispose();
-    super.onClose();
-  }
-
   void toggleObscureText() {
     isObscured.value = !isObscured.value;
   }
