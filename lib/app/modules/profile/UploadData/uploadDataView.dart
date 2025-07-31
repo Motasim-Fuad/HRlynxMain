@@ -113,7 +113,12 @@ class UploadDataView extends StatelessWidget {
                   // Save Button
                   Button(
                     title: controller.isLoading.value ? "Saving..." : "Save",
-                    onTap: controller.isLoading.value ? null : controller.saveData,
+                    onTap: (){
+                      controller.isLoading.value ? null : controller.saveData();
+                      dobController.clear();
+                    },
+
+
                   ),
                 ],
               ),

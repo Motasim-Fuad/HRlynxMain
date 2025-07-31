@@ -390,28 +390,32 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Plan name
-                  Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 22,
-                      color: isSelected ? AppColors.primarycolor : Colors.white,
-                    ),
-                  ),
 
-                  const SizedBox(height: 8),
 
-                  // Price
-                  Text(
-                    price,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 28,
-                      color: isSelected ? Colors.teal.shade700 : Colors.teal.shade300,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Plan name
+                      Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: isSelected ? AppColors.primarycolor : Colors.white,
+                        ),
+                      ),
+                      // Price
+                      Text(
+                        price,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 18,
+                          color: isSelected ? Colors.teal.shade700 : Colors.teal.shade300,
+                        ),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 12),
@@ -465,23 +469,23 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
               ),
 
             // Selection indicator
-            if (isSelected)
-              Positioned(
-                top: 15,
-                right: 15,
-                child: Container(
-                  padding: EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.teal.shade700,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.check,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                ),
-              ),
+            // if (isSelected)
+            //   Positioned(
+            //     top: 15,
+            //     right: 15,
+            //     child: Container(
+            //       padding: EdgeInsets.all(4),
+            //       decoration: BoxDecoration(
+            //         color: Colors.teal.shade700,
+            //         shape: BoxShape.circle,
+            //       ),
+            //       child: Icon(
+            //         Icons.check,
+            //         color: Colors.white,
+            //         size: 16,
+            //       ),
+            //     ),
+            //   ),
           ],
         ),
       ),
@@ -534,17 +538,12 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.play_circle_outline,
-                    color: Colors.white,
-                    size: 24,
-                  ),
                   const SizedBox(width: 8),
                   Text(
                     'Start Free Trial',
                     style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 21,
                       color: Colors.white,
                     ),
                   ),

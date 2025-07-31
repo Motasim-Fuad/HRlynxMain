@@ -93,13 +93,14 @@ class UploadDataController extends GetxController {
       print("✅ Upload response: $response");
 
       if (response != null && response['success'] == true) {
-        Get.snackbar(
-          "Success",
-          "Profile updated successfully!",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+     print("profile update successfull");
 
+          nameController.clear();
+          phoneController.clear();
+          bioController.clear();
+          selectedGender.value = ''; // <-- Clear selected radio button
+          dateOfBirth.value = '';     // <-- Optionally clear date
+          selectedImage.value = null; // <-- Optionally clear selected image
         // Get the ProfileController and refresh the profile data
         try {
           final ProfileController profileController = Get.find<ProfileController>();

@@ -103,7 +103,7 @@ class HomeView extends StatelessWidget {
                                   color: Colors.white,
                                 ),
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 20),
                               GestureDetector(
                                 onTap: () => Get.to(() => const NewsView()),
                                 child: Container(
