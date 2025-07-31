@@ -174,61 +174,131 @@ class ChatView extends StatelessWidget {
       final session = chatController.session.value;
 
       return Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          leading: IconButton(onPressed: (){
-            Get.off(MainScreen());
-          }, icon: Icon(Icons.arrow_back)),
-          title: session != null
-              ? Row(
-            children: [
-              CircleAvatar(
-                radius: MediaQuery.of(context).size.width * 0.08,
-                backgroundImage: CachedNetworkImageProvider(
-                  "${ApiConstants.baseUrl}${session.persona?.avatar ?? ''}",
-                ),
-              ),
-              SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      session.persona?.name ?? '',
-                      style: TextStyle(
-                        fontSize: MediaQuery.of(context).size.width * 0.045,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      session.persona?.title ?? '',
-                      style: TextStyle(
-                        fontSize: MediaQuery.of(context).size.width * 0.03,
-                        color: Colors.grey[700],
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          )
-              : const Text('Loading...'),
-          actions: [
-            Builder(
-              builder: (context) => IconButton(
-                icon: const Icon(Icons.more_vert_outlined),
-                onPressed: () {
-                  Scaffold.of(context).openEndDrawer();
-                },
-              ),
-            ),
-          ],
-        ),
+        // appBar: AppBar(
+        //   automaticallyImplyLeading: false,
+        //   leading: IconButton(onPressed: (){
+        //     Get.off(MainScreen());
+        //   }, icon: Icon(Icons.arrow_back)),
+        //   title: session != null
+        //       ? Row(
+        //                   children: [
+        //       CircleAvatar(
+        //         radius: MediaQuery.of(context).size.width * 0.08,
+        //         backgroundImage: CachedNetworkImageProvider(
+        //           "${ApiConstants.baseUrl}${session.persona?.avatar ?? ''}",
+        //         ),
+        //       ),
+        //       SizedBox(width: MediaQuery.of(context).size.width * 0.02),
+        //       Expanded(
+        //         child: Column(
+        //           crossAxisAlignment: CrossAxisAlignment.start,
+        //           mainAxisSize: MainAxisSize.min,
+        //           children: [
+        //             Text(
+        //               session.persona?.name ?? '',
+        //               style: TextStyle(
+        //                 fontSize: MediaQuery.of(context).size.width * 0.045,
+        //                 fontWeight: FontWeight.w600,
+        //               ),
+        //               overflow: TextOverflow.ellipsis,
+        //             ),
+        //             Text(
+        //               session.persona?.title ?? '',
+        //               style: TextStyle(
+        //                 fontSize: MediaQuery.of(context).size.width * 0.03,
+        //                 color: Colors.grey[700],
+        //               ),
+        //               overflow: TextOverflow.ellipsis,
+        //             ),
+        //           ],
+        //         ),
+        //       ),
+        //                   ],
+        //                 )
+        //       : const Text('Loading...'),
+        //   actions: [
+        //     Builder(
+        //       builder: (context) => IconButton(
+        //         icon: const Icon(Icons.more_vert_outlined),
+        //         onPressed: () {
+        //           Scaffold.of(context).openEndDrawer();
+        //         },
+        //       ),
+        //     ),
+        //   ],
+        // ),
         body: Column(
           children: [
+              SizedBox(height: 20,),
+            Container(
+              padding: EdgeInsets.all(12),
+              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: Colors.grey.shade300, width: 1.5),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    blurRadius: 6,
+                    offset: Offset(0, 3),
+                  )
+                ],
+              ),
+              child: session != null
+                  ? Row(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.arrow_back),
+                    onPressed: () {
+                      Get.off(MainScreen());
+                    },
+                  ),
+                  CircleAvatar(
+                    radius: MediaQuery.of(context).size.width * 0.08,
+                    backgroundImage: CachedNetworkImageProvider(
+                      "${ApiConstants.baseUrl}${session.persona?.avatar ?? ''}",
+                    ),
+                  ),
+                  SizedBox(width: MediaQuery.of(context).size.width * 0.02),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          session.persona?.name ?? '',
+                          style: TextStyle(
+                            fontSize: MediaQuery.of(context).size.width * 0.045,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          session.persona?.title ?? '',
+                          style: TextStyle(
+                            fontSize: MediaQuery.of(context).size.width * 0.03,
+                            color: Colors.grey[700],
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Builder(
+                    builder: (context) => IconButton(
+                      icon: Icon(Icons.more_vert_outlined),
+                      onPressed: () {
+                        Scaffold.of(context).openEndDrawer();
+                      },
+                    ),
+                  ),
+                ],
+              )
+                  : const Text('Loading...'),
+            ),
+
+
             // AI Guidance text + tooltip
             Stack(
               children: [
@@ -252,19 +322,22 @@ class ChatView extends StatelessWidget {
                   GestureDetector(
                     behavior: HitTestBehavior.translucent,
                     onTap: tooltipCtrl.hide,
-                    child: Container(
-                      color: Colors.transparent,
-                      child: Column(
-                        children: [
-                          SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-                          Align(
-                            alignment: Alignment.center,
-                            child: ChatTooltipBubble(
-                              message:
-                              "AI-powered responses are provided for informational purposes only and do not constitute legal, compliance, or professional advice. Users should consult qualified HR, legal, or compliance professionals before making employment decisions. HRlynx AI Personas are not a substitute for independent judgment or expert consultation. Content may not reflect the most current regulatory or legal developments. Use of this platform is subject to the Terms of Use and Privacy Policy.",
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 0),
+                      child: Container(
+                        color: Colors.transparent,
+                        child: Column(
+                          children: [
+                            SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+                            Align(
+                              alignment: Alignment.center,
+                              child: ChatTooltipBubble(
+                                message:
+                                "AI-powered responses are provided for informational purposes only and do not constitute legal, compliance, or professional advice. Users should consult qualified HR, legal, or compliance professionals before making employment decisions. HRlynx AI Personas are not a substitute for independent judgment or expert consultation. Content may not reflect the most current regulatory or legal developments. Use of this platform is subject to the Terms of Use and Privacy Policy.",
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
