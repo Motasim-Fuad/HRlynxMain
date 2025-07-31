@@ -226,7 +226,9 @@ class FirebaseMeg {
             backgroundColor: backgroundColor,
             duration: Duration(seconds: 3),
             onTap: onTap != null ? (snack) => onTap() : null,
+            snackPosition:SnackPosition.TOP ,
           ),
+
         );
       } else {
         // If context not ready, delay and try again

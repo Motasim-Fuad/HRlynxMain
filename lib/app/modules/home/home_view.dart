@@ -188,7 +188,7 @@ class HomeView extends StatelessWidget {
                         },
                         child: Container(
                           decoration: BoxDecoration(
-                            color: isPersonaActive ? Colors.teal : Colors.grey,
+                            color: isPersonaActive ? Colors.white : Colors.grey,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: Colors.grey.shade300),
                             boxShadow: [
@@ -243,7 +243,7 @@ class HomeView extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: isPersonaActive ? Colors.white : Colors.white70,
+                                    color: isPersonaActive ? Colors.black : Colors.white70,
                                   ),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,

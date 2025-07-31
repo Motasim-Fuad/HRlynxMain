@@ -169,7 +169,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                           ),
                         ),
 
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 5),
 
                         // Title
                         Text(
@@ -194,30 +194,30 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                           child: Text(
                             'Start your 7-day free trial',
                             style: TextStyle(
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w500,
                               fontSize: 18,
                               color: Colors.white,
                             ),
                           ),
                         ),
 
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 10),
 
                         // Features list
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
+                          padding: const EdgeInsets.only(left: 58,  bottom: 0,  right: 0, top: 0),
                           child: Column(
                             children: [
                               _buildFeatureRow('Unlimited AI Persona Access', Icons.psychology),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 8),
                               _buildFeatureRow('Unlimited Chat Support', Icons.chat_bubble_outline),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 8),
                               _buildFeatureRow('Save Conversations', Icons.save_outlined),
                             ],
                           ),
                         ),
 
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 20),
 
                         // Plan cards
                         if (yearlyPlan != null)
@@ -226,8 +226,9 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                             controller,
                             'yearly',
                             '${yearlyPlan.name}',
-                            '\$${yearlyPlan.price}/${yearlyPlan.interval}',
-                            '25% savings - Get 3 months free',
+                            '\$${yearlyPlan.price}/',
+                            '${yearlyPlan.interval}',
+                            'Save 25% - Get 3 months free',
                             true,
                           ),
 
@@ -238,27 +239,27 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                             controller,
                             'monthly',
                             '${monthlyPlan.name}',
-                            '\$${monthlyPlan.price}/${monthlyPlan.interval}',
+                            '\$${monthlyPlan.price}/',
+                            '${monthlyPlan.interval}',
                             'Less than a daily latte. Much more satisfying.',
                             false,
                           ),
                         ],
 
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 16),
 
                         // Start trial button
                         _buildStartTrialButton(controller),
 
-                        const SizedBox(height: 25),
+                        const SizedBox(height: 16),
 
                         // Skip trial text
                         _buildSkipTrialText(),
 
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 13),
 
                         // Policy links
                         _buildPolicyLinks(),
-
                         const SizedBox(height: 30),
                       ],
                     ),
@@ -329,17 +330,16 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
             ),
             child: Icon(
               icon,
-              color: Colors.teal.shade300,
-              size: 20,
+              color: Colors.white,
+              size: 15,
             ),
           ),
-          const SizedBox(width: 15),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
               style: TextStyle(
                 color: Colors.white,
-                fontWeight: FontWeight.w500,
                 fontSize: 16,
               ),
             ),
@@ -355,6 +355,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
       String planType,
       String title,
       String price,
+      String indivul,
       String subtitle,
       bool isPopular,
       ) {
@@ -365,7 +366,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
       child: AnimatedContainer(
         duration: Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 0),
         child: Stack(
           clipBehavior: Clip.none,
           children: [
@@ -388,33 +389,42 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                 ] : null,
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Plan name
                       Text(
                         title,
-                        textAlign: TextAlign.center,
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: 16,
+                          fontSize: 19,
                           color: isSelected ? AppColors.primarycolor : Colors.white,
                         ),
                       ),
                       // Price
-                      Text(
-                        price,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 18,
-                          color: isSelected ? Colors.teal.shade700 : Colors.teal.shade300,
-                        ),
-                      ),
+                      Row(
+                        children: [
+                          Text(
+                            price,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 22,
+                              color: isSelected ? AppColors.primarycolor: Colors.white,
+                            ),
+                          ),
+
+                          Text(
+                            indivul,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              color: isSelected ? AppColors.primarycolor: Colors.white,
+                            ),
+                          ),
+                        ],
+                      )
                     ],
                   ),
 
@@ -423,10 +433,9 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                   // Subtitle
                   Text(
                     subtitle,
-                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontWeight: FontWeight.w400,
-                      fontSize: 14,
+                      fontSize: 13,
                       color: isSelected ? AppColors.primarycolor.withOpacity(0.8) : Colors.white.withOpacity(0.9),
                     ),
                   ),
@@ -541,9 +550,10 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                   const SizedBox(width: 8),
                   Text(
                     'Start Free Trial',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 21,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),

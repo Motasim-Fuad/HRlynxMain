@@ -9,6 +9,10 @@ class NotificationView extends StatelessWidget {
   Widget build(BuildContext context) {
     final notificationService = Get.find<NotificationService>();
 
+    // final filteredNotifications = notificationService.notifications
+    //     .where((n) => n.notificationType.toLowerCase() == 'in_app')
+    //     .toList();
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -173,6 +177,10 @@ class NotificationView extends StatelessWidget {
                     );
                   }
                 },
+
+
+                // show all notification "in app , eamil ,push"
+
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   itemCount: notificationService.notifications.length,
@@ -184,6 +192,20 @@ class NotificationView extends StatelessWidget {
                     );
                   },
                 ),
+
+
+                // // show just in app notification
+                // child: ListView.builder(
+                //   padding: const EdgeInsets.symmetric(vertical: 8),
+                //   itemCount: filteredNotifications.length,
+                //   itemBuilder: (context, index) {
+                //     final notification = filteredNotifications[index];
+                //     return NotificationTile(
+                //       notification: notification,
+                //       onTap: () => _handleNotificationTap(context, notification, notificationService),
+                //     );
+                //   },
+                // ),
               );
             }),
           ),
