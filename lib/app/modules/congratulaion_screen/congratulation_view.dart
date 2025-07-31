@@ -13,29 +13,30 @@ class CongratulationView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(height: Get.height * .1),
-          Image.asset(AppImages.coffee),
-          Text(
-            'Congratulations!',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 34,
-              color: Color(0xFF121212),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(height: Get.height * .1),
+            Image.asset(AppImages.coffee),
+            Text(
+              'Congratulations!',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 34,
+                color: Color(0xFF121212),
+              ),
             ),
-          ),
-          SizedBox(height: Get.height * .05),
-          CongratulaionsText(),
-          SizedBox(height: Get.height * .19),
-          GestureDetector(
-            onTap: () {
-              Get.offAll(MainScreen());
-            },
-            child: Button(title: 'Home'),
-          ),
-        ],
+            SizedBox(height: Get.height * .05),
+            CongratulaionsText(),
+            SizedBox(height: Get.height * .19),
+               Button(title: 'Home',onTap: () {
+                Get.offAll(MainScreen());
+              },
+               ),
+          ],
+        ),
       ),
     );
   }

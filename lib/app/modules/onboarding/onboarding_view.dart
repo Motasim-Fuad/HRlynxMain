@@ -86,21 +86,33 @@ class OnboardingView extends StatelessWidget {
             ),
 
 
-              Button(title: 'Next',onTap: () async  {
-                // Example: save selected persona to memory
+            Button(
+              title: 'Next',
+              onTap: () async {
+                if (controller.personaList.isEmpty) {
+                  Get.snackbar("Error", "Please select a persona first");
+                  return;
+                }
+
+                if (controller.selectedIndex.value >= controller.personaList.length) {
+                  Get.snackbar("Error", "Invalid persona selected");
+                  return;
+                }
+
                 final selectedPersona = controller.personaList[controller.selectedIndex.value];
+
                 print(" ########Selected ai persona ### : ${selectedPersona.title}");
                 print(" ########Selected ai persona ### : ${selectedPersona.id}");
 
-
-                // Save selected persona ID to storage
                 if (selectedPersona.id != null) {
                   await TokenStorage.saveSelectedPersonaId(selectedPersona.id!);
                   print("✅ Saved persona ID ${selectedPersona.id} to storage");
                 }
 
                 Get.to(() => LogInView());
-              },),
+              },
+            ),
+
 
           ],
         ),

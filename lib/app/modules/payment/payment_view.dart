@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:hr/app/common_widgets/privacy_policy.dart';
 import 'package:hr/app/modules/congratulaion_screen/congratulation_view.dart';
 import 'package:hr/app/modules/payment/payment_controller.dart';
-import 'package:hr/app/modules/payment/subcription_controller.dart';
 import 'package:hr/app/modules/terms_of_use/terms_of_use.dart';
 import 'package:hr/app/utils/app_colors.dart';
 import 'package:hr/app/utils/app_images.dart';
@@ -65,7 +64,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'প্ল্যান লোড হচ্ছে...',
+                    'Loading plans...',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -92,7 +91,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      'কোন সাবস্ক্রিপশন প্ল্যান উপলব্ধ নেই',
+                      'No subscription plans available',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -102,7 +101,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'দয়া করে পরে আবার চেষ্টা করুন',
+                      'Please try again later',
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 14,
@@ -120,7 +119,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                         ),
                       ),
                       child: Text(
-                        'আবার চেষ্টা করুন',
+                        'Try Again',
                         style: TextStyle(color: Colors.white),
                       ),
                     ),
@@ -174,7 +173,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
 
                         // Title
                         Text(
-                          'এক্সপ্লোর প্রো',
+                          'Explorer Pro',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
@@ -193,7 +192,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            '৭ দিনের ফ্রি ট্রায়াল শুরু করুন',
+                            'Start your 7-day free trial',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 18,
@@ -209,11 +208,11 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                           padding: const EdgeInsets.symmetric(horizontal: 40),
                           child: Column(
                             children: [
-                              _buildFeatureRow('আনলিমিটেড AI পার্সোনা অ্যাক্সেস', Icons.psychology),
+                              _buildFeatureRow('Unlimited AI Persona Access', Icons.psychology),
                               const SizedBox(height: 12),
-                              _buildFeatureRow('আনলিমিটেড চ্যাট সহায়তা', Icons.chat_bubble_outline),
+                              _buildFeatureRow('Unlimited Chat Support', Icons.chat_bubble_outline),
                               const SizedBox(height: 12),
-                              _buildFeatureRow('কথোপকথন সেভ করুন', Icons.save_outlined),
+                              _buildFeatureRow('Save Conversations', Icons.save_outlined),
                             ],
                           ),
                         ),
@@ -228,7 +227,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                             'yearly',
                             '${yearlyPlan.name}',
                             '\$${yearlyPlan.price}/${yearlyPlan.interval}',
-                            '২৫% সাশ্রয় - ৩ মাস ফ্রি পান',
+                            '25% savings - Get 3 months free',
                             true,
                           ),
 
@@ -240,7 +239,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                             'monthly',
                             '${monthlyPlan.name}',
                             '\$${monthlyPlan.price}/${monthlyPlan.interval}',
-                            'দৈনিক একটি ল্যাটের চেয়ে কম। অনেক বেশি সন্তোষজনক।',
+                            'Less than a daily latte. Much more satisfying.',
                             false,
                           ),
                         ],
@@ -288,7 +287,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                           ),
                           const SizedBox(height: 20),
                           Text(
-                            'পেমেন্ট প্রক্রিয়া চলছে...',
+                            'Processing payment...',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -298,7 +297,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'দয়া করে অপেক্ষা করুন',
+                            'Please wait',
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 14,
@@ -454,7 +453,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                       ],
                     ),
                     child: Text(
-                      'সবচেয়ে জনপ্রিয়',
+                      'Most Popular',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -520,7 +519,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
               ),
               const SizedBox(width: 12),
               Text(
-                'লোড হচ্ছে...',
+                'Loading...',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 18,
@@ -542,7 +541,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'ফ্রি ট্রায়াল শুরু করুন',
+                    'Start Free Trial',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 18,
@@ -555,7 +554,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 8),
                 child: Text(
-                  'কোন বাধ্যবাধকতা নেই। ট্রায়াল সময়ে যেকোনো সময় বাতিল করুন।',
+                  'No commitment. Cancel anytime during trial.',
                   style: TextStyle(
                     fontWeight: FontWeight.w400,
                     fontSize: 11,
@@ -579,7 +578,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         child: Text(
-          'ট্রায়াল এড়িয়ে যান, সীমিত ফ্রি অ্যাক্সেস নিয়ে চালিয়ে যান।',
+          'Skip trial, continue with limited free access.',
           style: TextStyle(
             decoration: TextDecoration.underline,
             decorationColor: Colors.white.withOpacity(0.8),
@@ -602,7 +601,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
           GestureDetector(
             onTap: () => Get.to(() => TermsOfUse()),
             child: Text(
-              'ব্যবহারের শর্তাবলী',
+              'Terms of Use',
               style: TextStyle(
                 decoration: TextDecoration.underline,
                 decorationColor: Colors.white.withOpacity(0.8),
@@ -613,7 +612,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
             ),
           ),
           Text(
-            ' এবং ',
+            ' and ',
             style: TextStyle(
               fontWeight: FontWeight.w400,
               color: Colors.white.withOpacity(0.8),
@@ -623,7 +622,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
           GestureDetector(
             onTap: () => Get.to(() => PrivacyPolicy()),
             child: Text(
-              'গোপনীয়তা নীতি।',
+              'Privacy Policy.',
               style: TextStyle(
                 decoration: TextDecoration.underline,
                 decorationColor: Colors.white.withOpacity(0.8),

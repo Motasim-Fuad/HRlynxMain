@@ -11,15 +11,17 @@ class HrRoleController extends GetxController {
   final _authRepo = AuthRepository();
 
   void select(int index) {
-    selectedIndex.value = index;
+    if (index >= 0 && index < personaList.length) {
+      selectedIndex.value = index;
+    }
   }
 
 
   Future<void> fetchPersonas() async {
     try {
       isLoading.value = true;
-      final response = await _authRepo.getParsonaType(); // dynamic raw response
-      final model = OnbordingModel.fromJson(response); // convert to model
+      final response = await _authRepo.getParsonaType();
+      final model = OnbordingModel.fromJson(response);
       personaList.value = model.data ?? [];
     } catch (e) {
       Get.snackbar("Error", e.toString());

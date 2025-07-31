@@ -6,7 +6,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:hr/app/common_widgets/button.dart';
 import 'package:hr/app/common_widgets/privacy_policy.dart';
 import 'package:hr/app/modules/change_password/change_password.dart' show ChangePassword;
-import 'package:hr/app/modules/changed_subscription/changed_subscription_view.dart';
 import 'package:hr/app/modules/log_in/user_controller.dart';
 import 'package:hr/app/modules/notification/notification_view.dart';
 import 'package:hr/app/modules/payment/payment_view.dart';
@@ -14,7 +13,6 @@ import 'package:hr/app/modules/profile/UploadData/uploadDataView.dart';
 import 'package:hr/app/modules/profile/profile_controller.dart' show ProfileController;
 import 'package:hr/app/modules/terms_of_use/terms_of_use.dart';
 import 'package:hr/app/utils/app_images.dart';
-import '../payment/subscription_view.dart' show Subscription;
 import 'logoutHelper.dart';
 
 class ProfileView extends StatelessWidget {
