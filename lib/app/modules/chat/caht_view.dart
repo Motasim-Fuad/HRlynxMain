@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hr/app/modules/chat/voice_service_controller.dart';
 import 'package:hr/app/modules/chat/widget/sessionTitle.dart' show SessionHistoryTile;
+import 'package:hr/app/modules/chat/widget/voice_message_widget.py.dart';
+import 'package:hr/app/modules/chat/widget/voice_recording_widget.dart' show VoiceRecordingWidget;
 import 'package:intl/intl.dart';
 
 import '../../api_servies/api_Constant.dart';
@@ -352,6 +354,7 @@ class ChatView extends StatelessWidget {
               ),
 
             // Messages list (Expanded to fill remaining space)
+            // Update your message display section in ChatView
             Expanded(
               child: Obx(() => ListView.builder(
                 controller: chatController.scrollController,
@@ -361,27 +364,30 @@ class ChatView extends StatelessWidget {
                   final isMe = message.isUser == true;
 
                   return Container(
-                    margin: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
-                    alignment:
-                    isMe ? Alignment.centerRight : Alignment.centerLeft,
+                    margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
                     child: Row(
-                      mainAxisAlignment:
-                      isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                      mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (!isMe)
                           CircleAvatar(
                             radius: 18,
-                            backgroundImage: session != null &&
-                                session.persona?.avatar != null
-                                ? CachedNetworkImageProvider(
-                                "${ApiConstants.baseUrl}${session.persona!.avatar}")
+                            backgroundImage: session != null && session.persona?.avatar != null
+                                ? CachedNetworkImageProvider("${ApiConstants.baseUrl}${session.persona!.avatar}")
                                 : null,
                           ),
                         if (!isMe) const SizedBox(width: 8),
                         Flexible(
-                          child: Container(
+                          child: message.isVoice
+                              ? VoiceMessageBubble(
+                            voiceUrl: message.voiceUrl,
+                            transcript: message.transcript,
+                            isUser: isMe,
+                            timestamp: formatTime(parseIsoDate(message.createdAt)),
+                            voiceService: voiceService,
+                          )
+                              : Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: isMe ? Colors.blue[100] : Colors.grey[300],
@@ -397,8 +403,7 @@ class ChatView extends StatelessWidget {
                                 const SizedBox(height: 4),
                                 Text(
                                   formatTime(parseIsoDate(message.createdAt)),
-                                  style: const TextStyle(
-                                      fontSize: 10, color: Colors.grey),
+                                  style: const TextStyle(fontSize: 10, color: Colors.grey),
                                 ),
                               ],
                             ),
@@ -484,105 +489,95 @@ class ChatView extends StatelessWidget {
             }),
 
             const Divider(height: 1),
-
-            // Input field + send button
+// Replace your input section with this in ChatView
+            // Replace your input section with this in ChatView
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: textController,
-                      decoration: InputDecoration(
-                        hintText: "Type a message...",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                      ),
-                      onTap: () {
+              child: Obx(() {
+                // Show voice recording widget when recording
+                if (voiceService.isRecording.value) {
+                  return VoiceRecordingWidget(
+                    duration: voiceService.formatDuration(voiceService.recordingDuration.value),
+                    onCancel: () async {
+                      await voiceService.cancelRecording();
+                    },
+                    onSend: () async {
+                      await chatController.sendVoiceMessage(sessionId);
+                    },
+                  );
+                }
 
+                // Show processing widget when processing voice
+                if (voiceService.isProcessing.value) {
+                  return Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(25),
+                      border: Border.all(color: Colors.orange.shade200),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 12),
+                        Text("Processing voice message..."),
+                      ],
+                    ),
+                  );
+                }
+
+                // Show normal input row
+                return Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: textController,
+                        decoration: InputDecoration(
+                          hintText: "Type a message...",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                        ),
+                        onTap: () {
+                          // Hide suggestions when user starts typing
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Voice button
+                    IconButton(
+                      onPressed: () async {
+                        final started = await voiceService.startRecording();
+                        if (!started) {
+                          Get.snackbar("Error", "Could not start recording");
+                        }
+                      },
+                      icon: Icon(Icons.mic),
+                    ),
+
+                    // Send button
+                    IconButton(
+                      icon: const Icon(Icons.send),
+                      onPressed: () {
+                        final text = textController.text.trim();
+                        if (text.isNotEmpty) {
+                          chatController.send(text);
+                          textController.clear();
+                          chatController.showSuggestions.value = false;
+                          chatController.isFirstTime.value = false;
+                        }
                       },
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Obx(() {
-                    if (voiceService.isRecording.value) {
-                      // Show recording state
-                      return GestureDetector(
-                        onTap: () async {
-                          final convertedText = await voiceService.stopRecordingAndProcess();
-                          if (convertedText != null && convertedText.trim().isNotEmpty) {
-                            // Set the converted text to your text controller
-                            textController.text = convertedText;
-                            textController.selection = TextSelection.fromPosition(
-                              TextPosition(offset: textController.text.length),
-                            );
-
-                            // Optionally auto-send the message
-                            // chatController.send(convertedText);
-                            // textController.clear();
-                          }
-                        },
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.stop,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                      );
-                    } else if (voiceService.isProcessing.value) {
-                      // Show processing state
-                      return Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: Colors.orange,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        ),
-                      );
-                    } else {
-                      // Show normal mic button
-                      return IconButton(
-                        onPressed: () async {
-                          final started = await voiceService.startRecording();
-                          if (!started) {
-                            Get.snackbar("Error", "Could not start recording");
-                          }
-                        },
-                        icon: Icon(Icons.mic),
-                      );
-                    }
-                  }),
-                  IconButton(
-                    icon: const Icon(Icons.send),
-                    onPressed: () {
-                      final text = textController.text.trim();
-                      if (text.isNotEmpty) {
-                        chatController.send(text);
-                        textController.clear();
-                        chatController.showSuggestions.value = false; // hide suggestions after send
-                        chatController.isFirstTime.value = false;
-                      }
-                    },
-                  ),
-                ],
-              ),
+                  ],
+                );
+              }),
             ),
           ],
         ),

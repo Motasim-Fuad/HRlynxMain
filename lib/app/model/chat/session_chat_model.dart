@@ -88,32 +88,52 @@ class Persona {
   }
 }
 
+
 class Messages {
   int? id;
   String? content;
   bool? isUser;
   String? createdAt;
+  String? messageType; // 'text' or 'voice'
+  String? voiceUrl;    // URL for voice messages
+  String? transcript;  // Transcript text for voice messages
 
-  Messages({this.id, this.content, this.isUser, this.createdAt});
+  Messages({
+    this.id,
+    this.content,
+    this.isUser,
+    this.createdAt,
+    this.messageType = 'text',
+    this.voiceUrl,
+    this.transcript,
+  });
 
   Messages.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     content = json['content'];
-    isUser = json['is_user'];
-    createdAt = json['created_at'];
-
+    isUser = json['is_user'] ?? json['isUser'];
+    createdAt = json['created_at'] ?? json['createdAt'];
+    messageType = json['message_type'] ?? 'text';
+    voiceUrl = json['voice_url'];
+    transcript = json['transcript'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['id'] = this.id;
-    data['content'] = this.content;
-    data['is_user'] = this.isUser;
-    data['created_at'] = this.createdAt;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['content'] = content;
+    data['is_user'] = isUser;
+    data['created_at'] = createdAt;
+    data['message_type'] = messageType;
+    data['voice_url'] = voiceUrl;
+    data['transcript'] = transcript;
     return data;
   }
-}
 
+  // Helper methods
+  bool get isVoice => messageType == 'voice';
+  bool get isText => messageType == 'text' || messageType == null;
+}
 class Pagination {
   int? page;
   int? pageSize;

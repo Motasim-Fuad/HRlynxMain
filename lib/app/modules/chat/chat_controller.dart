@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hr/app/modules/chat/voice_service_controller.dart' show VoiceService;
 import '../../api_servies/repository/auth_repo.dart';
 import '../../api_servies/webSocketServices.dart';
 import '../../api_servies/token.dart';
@@ -151,7 +152,13 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
 
         case 'chat_message':
         case 'message':
-          _handleIncomingMessage(data);
+        // Check if it's a voice message
+          final messageType = data['message_type'] ?? 'text';
+          if (messageType == 'voice') {
+            _handleIncomingVoiceMessage(data);
+          } else {
+            _handleIncomingMessage(data);
+          }
           break;
 
         default:
@@ -181,15 +188,24 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
         return;
       }
 
-      // Extract other fields
-      final messageId = data['message_id'] ?? data['id'];
+      // Fix: Convert string message_id to int
+      int? messageId;
+      final rawMessageId = data['message_id'] ?? data['id'];
+      if (rawMessageId != null) {
+        if (rawMessageId is String) {
+          messageId = int.tryParse(rawMessageId);
+        } else if (rawMessageId is int) {
+          messageId = rawMessageId;
+        }
+      }
+
       final timestamp = data['timestamp'] ?? data['created_at'] ?? DateTime.now().toIso8601String();
 
       print('💬 Adding new AI message (${content.length} chars): ${content.substring(0, content.length > 50 ? 50 : content.length)}...');
 
       // Create new message object
       final newMessage = Messages(
-        id: messageId,
+        id: messageId, // Now properly converted to int?
         content: content,
         isUser: false,
         createdAt: timestamp,
@@ -370,6 +386,119 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
+    }
+  }
+  // Add these methods to your existing ChatController class
+
+// Replace your sendVoiceMessage method in ChatController with this:
+
+  Future<void> sendVoiceMessage(String sessionId) async {
+    final voiceService = Get.find<VoiceService>();
+
+    try {
+      final response = await voiceService.stopRecordingAndSendToChat(sessionId);
+
+      if (response != null && response['success'] == true) {
+        final data = response['data'];
+
+        // Fix: Convert string message_id to int
+        int? messageId;
+        if (data['message_id'] != null) {
+          if (data['message_id'] is String) {
+            messageId = int.tryParse(data['message_id']);
+          } else if (data['message_id'] is int) {
+            messageId = data['message_id'];
+          }
+        }
+
+        // Add voice message to UI
+        final voiceMessage = Messages(
+          id: messageId,
+          content: data['transcript'], // The converted text
+          isUser: true,
+          createdAt: DateTime.now().toIso8601String(),
+          messageType: 'voice', // This will make isVoice return true
+          voiceUrl: data['voice_url'],
+          transcript: data['transcript'],
+        );
+
+        messages.add(voiceMessage);
+        print('🎤 Added voice message to UI');
+
+        // Force UI update
+        update();
+        messages.refresh();
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          scrollToBottom();
+        });
+
+        // IMPORTANT: Send the transcript to WebSocket to get AI response
+        if (wsService.isConnected && data['transcript'] != null) {
+          wsService.sendMessage(data['transcript']);
+          print('📤 Sent transcript to AI: ${data['transcript']}');
+        }
+
+        Get.snackbar("Success", "Voice message sent successfully");
+      } else {
+        Get.snackbar("Error", "Failed to send voice message");
+      }
+    } catch (e) {
+      print('❌ Error sending voice message: $e');
+      Get.snackbar("Error", "Error sending voice message: $e");
+    }
+  }
+
+// Replace your _handleIncomingVoiceMessage method with this:
+
+  void _handleIncomingVoiceMessage(Map<String, dynamic> data) {
+    try {
+      // Stop typing indicator
+      isTyping.value = false;
+
+      final messageType = data['message_type'] ?? 'text';
+
+      if (messageType == 'voice') {
+        // Fix: Convert string message_id to int
+        int? messageId;
+        final rawMessageId = data['message_id'] ?? data['id'];
+        if (rawMessageId != null) {
+          if (rawMessageId is String) {
+            messageId = int.tryParse(rawMessageId);
+          } else if (rawMessageId is int) {
+            messageId = rawMessageId;
+          }
+        }
+
+        // Handle voice message
+        final voiceMessage = Messages(
+          id: messageId,
+          content: data['transcript'] ?? data['content'],
+          isUser: false,
+          createdAt: data['timestamp'] ?? data['created_at'] ?? DateTime.now().toIso8601String(),
+          messageType: 'voice', // This will make isVoice return true
+          voiceUrl: data['voice_url'],
+          transcript: data['transcript'],
+        );
+
+        messages.add(voiceMessage);
+        print('🎤 Added incoming voice message to UI');
+      } else {
+        // Handle regular text message (your existing logic)
+        _handleIncomingMessage(data);
+        return; // Early return to avoid duplicate UI updates
+      }
+
+      // Force UI update
+      update();
+      messages.refresh();
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        scrollToBottom();
+      });
+
+    } catch (e) {
+      print('❌ Error handling incoming voice message: $e');
     }
   }
 
