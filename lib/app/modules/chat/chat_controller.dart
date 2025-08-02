@@ -251,7 +251,8 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
     return null;
   }
 
-// Replace the problematic code in your fetchSessionDetails() method with this:
+
+  // Simple solution specifically for your use case
   Future<void> fetchSessionDetails() async {
     try {
       final sessionIdInt = sessionIdAsInt;
@@ -271,54 +272,107 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
       messages.clear();
 
       if (model.messages != null && model.messages!.isNotEmpty) {
-        // Debug: Print all messages and their voice properties
-        for (int i = 0; i < model.messages!.length; i++) {
-          final message = model.messages![i];
-          print("📋 Message $i:");
-          print("  - ID: ${message.id}");
-          print("  - Content: ${message.content?.substring(0, math.min(50, message.content?.length ?? 0))}...");
-          print("  - hasVoice: ${message.hasVoice}");
-          print("  - messageType: ${message.messageType}");
-          print("  - voice_file_url: ${message.voice_file_url}");
-          print("  - transcript: ${message.transcript}");
-          print("  - isVoice getter: ${message.isVoice}"); // This calls the getter
+        // Sort messages by ID first
+        List<Messages> sortedMessages = List.from(model.messages!);
+        sortedMessages.sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0));
+
+        print("🔍 Processing ${sortedMessages.length} messages for duplicates");
+
+        List<Messages> filteredMessages = [];
+        Set<String> processedContents = <String>{};
+
+        for (int i = 0; i < sortedMessages.length; i++) {
+          final currentMessage = sortedMessages[i];
+          final content = currentMessage.content?.trim() ?? '';
+
+          if (content.isEmpty) {
+            filteredMessages.add(currentMessage);
+            continue;
+          }
+
+          print("📋 Message ${currentMessage.id}: '${content.substring(0, math.min(30, content.length))}...'");
+          print("  - isVoice: ${currentMessage.isVoice}");
+          print("  - hasVoice: ${currentMessage.hasVoice}");
+          print("  - messageType: ${currentMessage.messageType}");
+
+          // Check if we've already processed this content
+          if (processedContents.contains(content)) {
+            print("🚫 Skipping duplicate message ${currentMessage.id}");
+            continue;
+          }
+
+          // Look ahead for messages with the same content
+          List<Messages> duplicateMessages = [currentMessage];
+
+          // Check next few messages for duplicates (usually within 5 messages)
+          for (int j = i + 1; j < math.min(i + 6, sortedMessages.length); j++) {
+            final nextMessage = sortedMessages[j];
+            if (nextMessage.content?.trim() == content) {
+              duplicateMessages.add(nextMessage);
+              print("🔍 Found duplicate: message ${nextMessage.id}");
+            }
+          }
+
+          if (duplicateMessages.length > 1) {
+            print("🔄 Processing ${duplicateMessages.length} duplicate messages");
+
+            // Find the best message to keep (prioritize voice)
+            Messages? voiceMessage;
+            Messages? textMessage;
+
+            for (var msg in duplicateMessages) {
+              if (_isVoiceMessage(msg)) {
+                voiceMessage = msg;
+                print("  🎤 Found voice version: ${msg.id}");
+              } else {
+                textMessage = msg;
+                print("  📝 Found text version: ${msg.id}");
+              }
+            }
+
+            // Choose voice over text
+            Messages selectedMessage;
+            if (voiceMessage != null) {
+              selectedMessage = Messages(
+                id: voiceMessage.id,
+                content: voiceMessage.content,
+                isUser: voiceMessage.isUser,
+                createdAt: voiceMessage.createdAt,
+                messageType: voiceMessage.messageType ?? 'voice',
+                hasVoice: voiceMessage.hasVoice ?? true,
+                voice_file_url: voiceMessage.voice_file_url,
+                transcript: voiceMessage.transcript ?? voiceMessage.content,
+              );
+              print("✅ Selected VOICE message ${voiceMessage.id}");
+
+              // Log what we're hiding
+              for (var duplicate in duplicateMessages) {
+                if (duplicate.id != voiceMessage.id) {
+                  print("🚫 Hiding duplicate message ${duplicate.id}");
+                }
+              }
+            } else {
+              selectedMessage = textMessage!;
+              print("✅ Selected TEXT message ${textMessage!.id} (no voice version)");
+            }
+
+            filteredMessages.add(selectedMessage);
+          } else {
+            // Single message, keep as is
+            filteredMessages.add(currentMessage);
+            print("✅ Keeping single message ${currentMessage.id}");
+          }
+
+          processedContents.add(content);
         }
 
-        // Process messages without filtering - show all messages as they are
-        List<Messages> processedMessages = [];
+        messages.assignAll(filteredMessages);
+        print('📥 Final result: ${filteredMessages.length} messages (removed ${sortedMessages.length - filteredMessages.length} duplicates)');
 
-        for (var message in model.messages!) {
-          // Create a copy of the message to ensure proper state
-          final processedMessage = Messages(
-            id: message.id,
-            content: message.content,
-            isUser: message.isUser,
-            createdAt: message.createdAt,
-            messageType: message.messageType, // Preserve original messageType
-            hasVoice: message.hasVoice, // Preserve hasVoice flag
-            voice_file_url: message.voice_file_url,
-            transcript: message.transcript,
-          );
-
-          processedMessages.add(processedMessage);
-
-          // Debug: Check if message should show as voice
-          print("✅ Processed message ID: ${processedMessage.id}");
-          print("   - isVoice: ${processedMessage.isVoice}");
-          print("   - messageType: ${processedMessage.messageType}");
-          print("   - hasVoice: ${processedMessage.hasVoice}");
-          print("   - voice_file_url: ${processedMessage.voice_file_url}");
-        }
-
-        // Sort by ID to maintain chronological order
-        processedMessages.sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0));
-
-        messages.assignAll(processedMessages);
-        print('📥 Loaded ${processedMessages.length} messages');
-
-        // Count voice messages for debugging
-        final voiceCount = processedMessages.where((msg) => msg.isVoice).length;
-        print('🎤 Voice messages count: $voiceCount');
+        // Debug final list
+        final voiceCount = filteredMessages.where((msg) => msg.isVoice).length;
+        print('🎤 Voice messages: $voiceCount');
+        print('📝 Text messages: ${filteredMessages.length - voiceCount}');
       }
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -328,67 +382,91 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
       print("❌ Failed to fetch session details: $e");
     }
   }
-  // Future<void> fetchSessionDetails() async {
-  //   try {
-  //     final sessionIdInt = sessionIdAsInt;
-  //     if (sessionIdInt == null) {
-  //       print("❌ Invalid session ID: cannot convert '$sessionId' to integer");
-  //       return;
-  //     }
-  //
-  //     print("📋 Fetching session details for ID: $sessionIdInt");
-  //     final response = await AuthRepository().fetchSessionsDetails(sessionIdInt);
-  //     final model = SessonChatHistoryModel.fromJson(response);
-  //     session.value = model.session;
-  //
-  //     print("************$response");
-  //
-  //     // Method 1: Check and print hasVoice for all messages
-  //     if (model.messages != null && model.messages!.isNotEmpty) {
-  //       for (int i = 0; i < model.messages!.length; i++) {
-  //         final message = model.messages![i];
-  //         print("Message $i hasVoice: ${message.hasVoice}");
-  //
-  //         if (message.hasVoice == true) {
-  //           print("Message $i has voice - Voice URL: ${message.voice_file_url}");
-  //           print("Message $i has voice - Transcript: ${message.transcript}");
-  //         }
-  //       }
-  //     }
-  //
-  //     // Method 2: Print hasVoice for each message individually
-  //     model.messages?.forEach((message) {
-  //       print("Message ID: ${message.id}, hasVoice: ${message.hasVoice}");
-  //       if (message.hasVoice == true) {
-  //         print("Voice URL: ${message.voice_file_url}");
-  //         print("Transcript: ${message.transcript}");
-  //       }
-  //     });
-  //
-  //     // Method 3: Find and print only messages that have voice
-  //     final voiceMessages = model.messages?.where((msg) => msg.hasVoice == true).toList();
-  //     if (voiceMessages != null && voiceMessages.isNotEmpty) {
-  //       print("Found ${voiceMessages.length} voice messages:");
-  //       for (var voiceMsg in voiceMessages) {
-  //         print("Voice Message ID: ${voiceMsg.id}, URL: ${voiceMsg.voice_file_url}",);
-  //
-  //       }
-  //     }
-  //
-  //     // Clear existing messages and add fetched ones
-  //     messages.clear();
-  //     if (model.messages != null && model.messages!.isNotEmpty) {
-  //       messages.assignAll(model.messages!);
-  //       print('📥 Loaded ${model.messages!.length} existing messages');
-  //     }
-  //
-  //     WidgetsBinding.instance.addPostFrameCallback((_) {
-  //       scrollToBottom();
-  //     });
-  //   } catch (e) {
-  //     print("❌ Failed to fetch session details: $e");
-  //   }
-  // }
+
+// Helper method to check if message is voice
+  bool _isVoiceMessage(Messages message) {
+    return message.messageType == 'voice' ||
+        message.hasVoice == true ||
+        (message.voice_file_url != null && message.voice_file_url!.isNotEmpty);
+  }
+
+// Replace the problematic code in your fetchSessionDetails() method with this:
+//   Future<void> fetchSessionDetails() async {
+//     try {
+//       final sessionIdInt = sessionIdAsInt;
+//       if (sessionIdInt == null) {
+//         print("❌ Invalid session ID: cannot convert '$sessionId' to integer");
+//         return;
+//       }
+//
+//       print("📋 Fetching session details for ID: $sessionIdInt");
+//       final response = await AuthRepository().fetchSessionsDetails(sessionIdInt);
+//       final model = SessonChatHistoryModel.fromJson(response);
+//       session.value = model.session;
+//
+//       print("************$response");
+//
+//       // Clear existing messages
+//       messages.clear();
+//
+//       if (model.messages != null && model.messages!.isNotEmpty) {
+//         // Debug: Print all messages and their voice properties
+//         for (int i = 0; i < model.messages!.length; i++) {
+//           final message = model.messages![i];
+//           print("📋 Message $i:");
+//           print("  - ID: ${message.id}");
+//           print("  - Content: ${message.content?.substring(0, math.min(50, message.content?.length ?? 0))}...");
+//           print("  - hasVoice: ${message.hasVoice}");
+//           print("  - messageType: ${message.messageType}");
+//           print("  - voice_file_url: ${message.voice_file_url}");
+//           print("  - transcript: ${message.transcript}");
+//           print("  - isVoice getter: ${message.isVoice}"); // This calls the getter
+//         }
+//
+//         // Process messages without filtering - show all messages as they are
+//         List<Messages> processedMessages = [];
+//
+//         for (var message in model.messages!) {
+//           // Create a copy of the message to ensure proper state
+//           final processedMessage = Messages(
+//             id: message.id,
+//             content: message.content,
+//             isUser: message.isUser,
+//             createdAt: message.createdAt,
+//             messageType: message.messageType, // Preserve original messageType
+//             hasVoice: message.hasVoice, // Preserve hasVoice flag
+//             voice_file_url: message.voice_file_url,
+//             transcript: message.transcript,
+//           );
+//
+//           processedMessages.add(processedMessage);
+//
+//           // Debug: Check if message should show as voice
+//           print("✅ Processed message ID: ${processedMessage.id}");
+//           print("   - isVoice: ${processedMessage.isVoice}");
+//           print("   - messageType: ${processedMessage.messageType}");
+//           print("   - hasVoice: ${processedMessage.hasVoice}");
+//           print("   - voice_file_url: ${processedMessage.voice_file_url}");
+//         }
+//
+//         // Sort by ID to maintain chronological order
+//         processedMessages.sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0));
+//
+//         messages.assignAll(processedMessages);
+//         print('📥 Loaded ${processedMessages.length} messages');
+//
+//         // Count voice messages for debugging
+//         final voiceCount = processedMessages.where((msg) => msg.isVoice).length;
+//         print('🎤 Voice messages count: $voiceCount');
+//       }
+//
+//       WidgetsBinding.instance.addPostFrameCallback((_) {
+//         scrollToBottom();
+//       });
+//     } catch (e) {
+//       print("❌ Failed to fetch session details: $e");
+//     }
+//   }
   Future<void> fetchSuggestions(int personaId) async {
     try {
       // Only fetch suggestions for new sessions

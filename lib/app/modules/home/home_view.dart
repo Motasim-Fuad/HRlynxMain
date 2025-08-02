@@ -43,15 +43,12 @@ class HomeView extends StatelessWidget {
         title: const Text(
           'HRlynx Home',
           style: TextStyle(
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.bold,
             fontSize: 24,
             color: Color(0xFF1B1E28),
           ),
         ),
         centerTitle: true,
-        actions: [
-          // Add any action buttons here if needed
-        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -103,7 +100,7 @@ class HomeView extends StatelessWidget {
                                   color: Colors.white,
                                 ),
                               ),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 40),
                               GestureDetector(
                                 onTap: () => Get.to(() => const NewsView()),
                                 child: Container(
