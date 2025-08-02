@@ -15,14 +15,16 @@ class VoiceService extends GetxController {
   final AudioRecorder _recorder = AudioRecorder();
   final AudioPlayer _player = AudioPlayer();
 
+  // Observable variables
   var isRecording = false.obs;
   var isProcessing = false.obs;
   var isPlaying = false.obs;
   var recordingDuration = 0.obs;
   var playbackPosition = Duration.zero.obs;
   var totalDuration = Duration.zero.obs;
+  var currentPlayingUrl = ''.obs;
+  var playbackProgress = 0.0.obs; // For progress indicator
 
-  String? _currentlyPlayingUrl;
   String? _recordingPath;
   Timer? _recordingTimer;
   StreamSubscription? _playerStateSubscription;
@@ -40,7 +42,6 @@ class VoiceService extends GetxController {
   void _configureAudioPlayer() async {
     try {
       await _player.setVolume(1.0);
-      // Set player mode to media player for better URL handling
       await _player.setPlayerMode(PlayerMode.mediaPlayer);
       print('🎵 Audio player configured successfully');
     } catch (e) {
@@ -49,12 +50,13 @@ class VoiceService extends GetxController {
   }
 
   void _setupAudioPlayerListeners() {
+    // Player completion listener - MOST IMPORTANT for your issue
     _playerCompleteSubscription = _player.onPlayerComplete.listen((_) {
-      print('🎵 Audio playback completed');
-      isPlaying.value = false;
-      _currentlyPlayingUrl = null;
-      playbackPosition.value = Duration.zero;
-      totalDuration.value = Duration.zero;
+      print('🎵 Audio playback completed - resetting state');
+      _resetPlaybackState();
+
+      // Force UI update
+      update();
     });
 
     _playerStateSubscription = _player.onPlayerStateChanged.listen((state) {
@@ -62,9 +64,8 @@ class VoiceService extends GetxController {
       switch (state) {
         case PlayerState.completed:
         case PlayerState.stopped:
-          isPlaying.value = false;
-          _currentlyPlayingUrl = null;
-          playbackPosition.value = Duration.zero;
+          print('🎵 Player completed/stopped - resetting state');
+          _resetPlaybackState();
           break;
         case PlayerState.playing:
           isPlaying.value = true;
@@ -75,15 +76,47 @@ class VoiceService extends GetxController {
         default:
           break;
       }
+
+      // Force UI update
+      update();
     });
 
     _playerPositionSubscription = _player.onPositionChanged.listen((position) {
       playbackPosition.value = position;
+      // Update progress percentage
+      if (totalDuration.value.inMilliseconds > 0) {
+        playbackProgress.value = position.inMilliseconds / totalDuration.value.inMilliseconds;
+      }
+
+      // Check if audio has finished playing manually
+      if (totalDuration.value.inMilliseconds > 0 &&
+          position.inMilliseconds >= totalDuration.value.inMilliseconds - 100) {
+        print('🎵 Audio reached end - manual completion');
+        Future.delayed(Duration(milliseconds: 100), () {
+          _resetPlaybackState();
+          update();
+        });
+      }
     });
 
     _playerDurationSubscription = _player.onDurationChanged.listen((duration) {
       totalDuration.value = duration;
       print('🎵 Audio duration: ${duration.inSeconds} seconds');
+    });
+  }
+
+  void _resetPlaybackState() {
+    print('🎵 Resetting playback state');
+    isPlaying.value = false;
+    currentPlayingUrl.value = '';
+    playbackPosition.value = Duration.zero;
+    playbackProgress.value = 0.0;
+
+    // Keep totalDuration for display purposes but reset after a delay
+    Future.delayed(Duration(milliseconds: 1000), () {
+      if (!isPlaying.value) {
+        totalDuration.value = Duration.zero;
+      }
     });
   }
 
@@ -205,28 +238,28 @@ class VoiceService extends GetxController {
     }
   }
 
-  // Enhanced play voice message with proper error handling
   Future<void> playVoiceMessage(String voiceUrl) async {
     try {
       print('🎵 Attempting to play voice: $voiceUrl');
 
       // If already playing this URL, pause it
-      if (_currentlyPlayingUrl == voiceUrl && isPlaying.value) {
+      if (currentPlayingUrl.value == voiceUrl && isPlaying.value) {
         print('🎵 Pausing current audio');
-        await _player.pause();
+        await pauseVoiceMessage();
         return;
       }
 
       // If playing different URL, stop it first
-      if (isPlaying.value && _currentlyPlayingUrl != voiceUrl) {
+      if (isPlaying.value && currentPlayingUrl.value != voiceUrl) {
         print('🎵 Stopping different audio');
-        await _player.stop();
-        await Future.delayed(Duration(milliseconds: 200));
+        await stopPlayback();
+        await Future.delayed(Duration(milliseconds: 300));
       }
 
-      _currentlyPlayingUrl = voiceUrl;
+      // Set the currently playing URL first
+      currentPlayingUrl.value = voiceUrl;
 
-      // Always download and play locally to avoid URL issues
+      // Download and play locally
       await _downloadAndPlay(voiceUrl);
 
     } catch (e) {
@@ -235,7 +268,25 @@ class VoiceService extends GetxController {
     }
   }
 
-  // Download and play locally - more reliable method
+  Future<void> pauseVoiceMessage() async {
+    try {
+      await _player.pause();
+      isPlaying.value = false;
+      // Keep currentPlayingUrl for potential resume
+    } catch (e) {
+      print('❌ Error pausing playback: $e');
+    }
+  }
+
+  Future<void> resumeVoiceMessage() async {
+    try {
+      await _player.resume();
+      isPlaying.value = true;
+    } catch (e) {
+      print('❌ Error resuming playback: $e');
+    }
+  }
+
   Future<void> _downloadAndPlay(String voiceUrl) async {
     try {
       print('🎵 Downloading and playing locally');
@@ -274,6 +325,9 @@ class VoiceService extends GetxController {
           // Stop any current playback
           await _player.stop();
 
+          // Small delay before playing
+          await Future.delayed(Duration(milliseconds: 100));
+
           // Play from local file
           await _player.play(DeviceFileSource(localPath));
           print('🎵 Playing from local file');
@@ -299,34 +353,34 @@ class VoiceService extends GetxController {
   }
 
   void _handlePlaybackError() {
-    isPlaying.value = false;
-    _currentlyPlayingUrl = null;
-    playbackPosition.value = Duration.zero;
-    totalDuration.value = Duration.zero;
+    _resetPlaybackState();
 
     Get.snackbar(
       "Audio Error",
       "Could not play voice message. Please check your internet connection.",
-      backgroundColor: Colors.red,
+      backgroundColor: Colors.red.shade600,
       colorText: Colors.white,
       duration: Duration(seconds: 3),
+      margin: EdgeInsets.all(16),
+      borderRadius: 8,
+      icon: Icon(Icons.error_outline, color: Colors.white),
     );
   }
 
   Future<void> stopPlayback() async {
     try {
       await _player.stop();
-      isPlaying.value = false;
-      _currentlyPlayingUrl = null;
-      playbackPosition.value = Duration.zero;
-      totalDuration.value = Duration.zero;
+      _resetPlaybackState();
+      update(); // Force UI update
     } catch (e) {
       print('❌ Error stopping playback: $e');
     }
   }
 
   bool isPlayingUrl(String url) {
-    return isPlaying.value && _currentlyPlayingUrl == url;
+    final result = isPlaying.value && currentPlayingUrl.value == url;
+    print('🎵 isPlayingUrl($url): $result (current: ${currentPlayingUrl.value}, isPlaying: ${isPlaying.value})');
+    return result;
   }
 
   Future<void> cancelRecording() async {
@@ -351,6 +405,12 @@ class VoiceService extends GetxController {
     final minutes = seconds ~/ 60;
     final remainingSeconds = seconds % 60;
     return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+
+  String formatDurationFromDuration(Duration duration) {
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   @override

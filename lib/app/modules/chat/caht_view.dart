@@ -583,7 +583,7 @@ class ChatView extends StatelessWidget {
         ),
         // In ChatView, modify the endDrawer section:
         endDrawer: Drawer(
-          width: Get.width * 0.7,
+          width: Get.width * 0.8,
           child: Container(
             color: AppColors.primarycolor,
             child: SafeArea(
