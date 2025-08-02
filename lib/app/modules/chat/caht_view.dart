@@ -176,59 +176,6 @@ class ChatView extends StatelessWidget {
       final session = chatController.session.value;
 
       return Scaffold(
-        // appBar: AppBar(
-        //   automaticallyImplyLeading: false,
-        //   leading: IconButton(onPressed: (){
-        //     Get.off(MainScreen());
-        //   }, icon: Icon(Icons.arrow_back)),
-        //   title: session != null
-        //       ? Row(
-        //                   children: [
-        //       CircleAvatar(
-        //         radius: MediaQuery.of(context).size.width * 0.08,
-        //         backgroundImage: CachedNetworkImageProvider(
-        //           "${ApiConstants.baseUrl}${session.persona?.avatar ?? ''}",
-        //         ),
-        //       ),
-        //       SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-        //       Expanded(
-        //         child: Column(
-        //           crossAxisAlignment: CrossAxisAlignment.start,
-        //           mainAxisSize: MainAxisSize.min,
-        //           children: [
-        //             Text(
-        //               session.persona?.name ?? '',
-        //               style: TextStyle(
-        //                 fontSize: MediaQuery.of(context).size.width * 0.045,
-        //                 fontWeight: FontWeight.w600,
-        //               ),
-        //               overflow: TextOverflow.ellipsis,
-        //             ),
-        //             Text(
-        //               session.persona?.title ?? '',
-        //               style: TextStyle(
-        //                 fontSize: MediaQuery.of(context).size.width * 0.03,
-        //                 color: Colors.grey[700],
-        //               ),
-        //               overflow: TextOverflow.ellipsis,
-        //             ),
-        //           ],
-        //         ),
-        //       ),
-        //                   ],
-        //                 )
-        //       : const Text('Loading...'),
-        //   actions: [
-        //     Builder(
-        //       builder: (context) => IconButton(
-        //         icon: const Icon(Icons.more_vert_outlined),
-        //         onPressed: () {
-        //           Scaffold.of(context).openEndDrawer();
-        //         },
-        //       ),
-        //     ),
-        //   ],
-        // ),
         body: Column(
           children: [
               SizedBox(height: 20,),
