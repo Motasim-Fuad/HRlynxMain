@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hr/app/modules/chat/voice_service_controller.dart' show VoiceService;
@@ -250,6 +251,7 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
     return null;
   }
 
+// Replace the problematic code in your fetchSessionDetails() method with this:
   Future<void> fetchSessionDetails() async {
     try {
       final sessionIdInt = sessionIdAsInt;
@@ -263,11 +265,60 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
       final model = SessonChatHistoryModel.fromJson(response);
       session.value = model.session;
 
-      // Clear existing messages and add fetched ones
+      print("************$response");
+
+      // Clear existing messages
       messages.clear();
+
       if (model.messages != null && model.messages!.isNotEmpty) {
-        messages.assignAll(model.messages!);
-        print('📥 Loaded ${model.messages!.length} existing messages');
+        // Debug: Print all messages and their voice properties
+        for (int i = 0; i < model.messages!.length; i++) {
+          final message = model.messages![i];
+          print("📋 Message $i:");
+          print("  - ID: ${message.id}");
+          print("  - Content: ${message.content?.substring(0, math.min(50, message.content?.length ?? 0))}...");
+          print("  - hasVoice: ${message.hasVoice}");
+          print("  - messageType: ${message.messageType}");
+          print("  - voice_file_url: ${message.voice_file_url}");
+          print("  - transcript: ${message.transcript}");
+          print("  - isVoice getter: ${message.isVoice}"); // This calls the getter
+        }
+
+        // Process messages without filtering - show all messages as they are
+        List<Messages> processedMessages = [];
+
+        for (var message in model.messages!) {
+          // Create a copy of the message to ensure proper state
+          final processedMessage = Messages(
+            id: message.id,
+            content: message.content,
+            isUser: message.isUser,
+            createdAt: message.createdAt,
+            messageType: message.messageType, // Preserve original messageType
+            hasVoice: message.hasVoice, // Preserve hasVoice flag
+            voice_file_url: message.voice_file_url,
+            transcript: message.transcript,
+          );
+
+          processedMessages.add(processedMessage);
+
+          // Debug: Check if message should show as voice
+          print("✅ Processed message ID: ${processedMessage.id}");
+          print("   - isVoice: ${processedMessage.isVoice}");
+          print("   - messageType: ${processedMessage.messageType}");
+          print("   - hasVoice: ${processedMessage.hasVoice}");
+          print("   - voice_file_url: ${processedMessage.voice_file_url}");
+        }
+
+        // Sort by ID to maintain chronological order
+        processedMessages.sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0));
+
+        messages.assignAll(processedMessages);
+        print('📥 Loaded ${processedMessages.length} messages');
+
+        // Count voice messages for debugging
+        final voiceCount = processedMessages.where((msg) => msg.isVoice).length;
+        print('🎤 Voice messages count: $voiceCount');
       }
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -277,6 +328,67 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
       print("❌ Failed to fetch session details: $e");
     }
   }
+  // Future<void> fetchSessionDetails() async {
+  //   try {
+  //     final sessionIdInt = sessionIdAsInt;
+  //     if (sessionIdInt == null) {
+  //       print("❌ Invalid session ID: cannot convert '$sessionId' to integer");
+  //       return;
+  //     }
+  //
+  //     print("📋 Fetching session details for ID: $sessionIdInt");
+  //     final response = await AuthRepository().fetchSessionsDetails(sessionIdInt);
+  //     final model = SessonChatHistoryModel.fromJson(response);
+  //     session.value = model.session;
+  //
+  //     print("************$response");
+  //
+  //     // Method 1: Check and print hasVoice for all messages
+  //     if (model.messages != null && model.messages!.isNotEmpty) {
+  //       for (int i = 0; i < model.messages!.length; i++) {
+  //         final message = model.messages![i];
+  //         print("Message $i hasVoice: ${message.hasVoice}");
+  //
+  //         if (message.hasVoice == true) {
+  //           print("Message $i has voice - Voice URL: ${message.voice_file_url}");
+  //           print("Message $i has voice - Transcript: ${message.transcript}");
+  //         }
+  //       }
+  //     }
+  //
+  //     // Method 2: Print hasVoice for each message individually
+  //     model.messages?.forEach((message) {
+  //       print("Message ID: ${message.id}, hasVoice: ${message.hasVoice}");
+  //       if (message.hasVoice == true) {
+  //         print("Voice URL: ${message.voice_file_url}");
+  //         print("Transcript: ${message.transcript}");
+  //       }
+  //     });
+  //
+  //     // Method 3: Find and print only messages that have voice
+  //     final voiceMessages = model.messages?.where((msg) => msg.hasVoice == true).toList();
+  //     if (voiceMessages != null && voiceMessages.isNotEmpty) {
+  //       print("Found ${voiceMessages.length} voice messages:");
+  //       for (var voiceMsg in voiceMessages) {
+  //         print("Voice Message ID: ${voiceMsg.id}, URL: ${voiceMsg.voice_file_url}",);
+  //
+  //       }
+  //     }
+  //
+  //     // Clear existing messages and add fetched ones
+  //     messages.clear();
+  //     if (model.messages != null && model.messages!.isNotEmpty) {
+  //       messages.assignAll(model.messages!);
+  //       print('📥 Loaded ${model.messages!.length} existing messages');
+  //     }
+  //
+  //     WidgetsBinding.instance.addPostFrameCallback((_) {
+  //       scrollToBottom();
+  //     });
+  //   } catch (e) {
+  //     print("❌ Failed to fetch session details: $e");
+  //   }
+  // }
   Future<void> fetchSuggestions(int personaId) async {
     try {
       // Only fetch suggestions for new sessions
@@ -418,7 +530,7 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
           isUser: true,
           createdAt: DateTime.now().toIso8601String(),
           messageType: 'voice', // This will make isVoice return true
-          voiceUrl: data['voice_url'],
+          voice_file_url: data['voice_url'],
           transcript: data['transcript'],
         );
 
@@ -477,7 +589,7 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
           isUser: false,
           createdAt: data['timestamp'] ?? data['created_at'] ?? DateTime.now().toIso8601String(),
           messageType: 'voice', // This will make isVoice return true
-          voiceUrl: data['voice_url'],
+          voice_file_url: data['voice_url'],
           transcript: data['transcript'],
         );
 

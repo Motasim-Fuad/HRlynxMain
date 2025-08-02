@@ -301,7 +301,7 @@ class ChatView extends StatelessWidget {
               ),
 
             // Messages list (Expanded to fill remaining space)
-            // Update your message display section in ChatView
+            // Replace your message display section in ChatView with this:
             Expanded(
               child: Obx(() => ListView.builder(
                 controller: chatController.scrollController,
@@ -309,6 +309,9 @@ class ChatView extends StatelessWidget {
                 itemBuilder: (_, i) {
                   final message = chatController.messages[i];
                   final isMe = message.isUser == true;
+
+                  // Debug print for each message
+                  print("🔍 Displaying message ${message.id}: isVoice=${message.isVoice}, messageType=${message.messageType}, hasVoice=${message.hasVoice}, voice_url=${message.voice_file_url}");
 
                   return Container(
                     margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -326,34 +329,47 @@ class ChatView extends StatelessWidget {
                           ),
                         if (!isMe) const SizedBox(width: 8),
                         Flexible(
-                          child: message.isVoice
-                              ? VoiceMessageBubble(
-                            voiceUrl: message.voiceUrl,
-                            transcript: message.transcript,
-                            isUser: isMe,
-                            timestamp: formatTime(parseIsoDate(message.createdAt)),
-                            voiceService: voiceService,
-                          )
-                              : Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: isMe ? Colors.blue[100] : Colors.grey[300],
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  message.content ?? '',
-                                  style: const TextStyle(fontSize: 15),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  formatTime(parseIsoDate(message.createdAt)),
-                                  style: const TextStyle(fontSize: 10, color: Colors.grey),
-                                ),
-                              ],
-                            ),
+                          child: Builder(
+                            builder: (context) {
+                              // Enhanced check for voice messages
+                              bool shouldShowAsVoice = message.isVoice;
+
+                              print("🎯 Message ${message.id} shouldShowAsVoice: $shouldShowAsVoice");
+
+                              if (shouldShowAsVoice) {
+                                print("🎤 Rendering as VoiceMessageBubble for message ${message.id}");
+                                return VoiceMessageBubble(
+                                  voiceUrl: message.voice_file_url,
+                                  transcript: message.transcript ?? message.content, // Fallback to content if no transcript
+                                  isUser: isMe,
+                                  timestamp: formatTime(parseIsoDate(message.createdAt)),
+                                  voiceService: voiceService,
+                                );
+                              } else {
+                                print("📝 Rendering as text bubble for message ${message.id}");
+                                return Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: isMe ? Colors.blue[100] : Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        message.content ?? '',
+                                        style: const TextStyle(fontSize: 15),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        formatTime(parseIsoDate(message.createdAt)),
+                                        style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            },
                           ),
                         ),
                       ],

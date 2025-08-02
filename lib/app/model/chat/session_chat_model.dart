@@ -90,49 +90,75 @@ class Persona {
 
 
 class Messages {
-  int? id;
-  String? content;
-  bool? isUser;
-  String? createdAt;
-  String? messageType; // 'text' or 'voice'
-  String? voiceUrl;    // URL for voice messages
-  String? transcript;  // Transcript text for voice messages
+  final int? id;
+  final String? content;
+  final bool? isUser;
+  final String? createdAt;
+  final String? messageType;
+  final bool? hasVoice;
+  final String? voice_file_url;
+  final String? transcript;
 
   Messages({
     this.id,
     this.content,
     this.isUser,
     this.createdAt,
-    this.messageType = 'text',
-    this.voiceUrl,
+    this.messageType,
+    this.hasVoice,
+    this.voice_file_url,
     this.transcript,
   });
 
-  Messages.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    content = json['content'];
-    isUser = json['is_user'] ?? json['isUser'];
-    createdAt = json['created_at'] ?? json['createdAt'];
-    messageType = json['message_type'] ?? 'text';
-    voiceUrl = json['voice_url'];
-    transcript = json['transcript'];
+  // Fixed isVoice getter - check multiple conditions
+  bool get isVoice {
+    // Check if messageType is 'voice'
+    if (messageType == 'voice') {
+      print("🎤 Message ${id} is voice due to messageType");
+      return true;
+    }
+
+    // Check if hasVoice flag is true
+    if (hasVoice == true) {
+      print("🎤 Message ${id} is voice due to hasVoice flag");
+      return true;
+    }
+
+    // Check if voice_file_url exists and is not empty
+    if (voice_file_url != null && voice_file_url!.isNotEmpty) {
+      print("🎤 Message ${id} is voice due to voice_file_url");
+      return true;
+    }
+
+    print("📝 Message ${id} is text message");
+    return false;
+  }
+
+  factory Messages.fromJson(Map<String, dynamic> json) {
+    return Messages(
+      id: json['id'] is String ? int.tryParse(json['id']) : json['id'],
+      content: json['content'],
+      isUser: json['is_user'] ?? json['isUser'],
+      createdAt: json['created_at'] ?? json['createdAt'],
+      messageType: json['message_type'] ?? json['messageType'],
+      hasVoice: json['has_voice'] ?? json['hasVoice'],
+      voice_file_url: json['voice_file_url'] ?? json['voiceFileUrl'],
+      transcript: json['transcript'],
+    );
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['id'] = id;
-    data['content'] = content;
-    data['is_user'] = isUser;
-    data['created_at'] = createdAt;
-    data['message_type'] = messageType;
-    data['voice_url'] = voiceUrl;
-    data['transcript'] = transcript;
-    return data;
+    return {
+      'id': id,
+      'content': content,
+      'is_user': isUser,
+      'created_at': createdAt,
+      'message_type': messageType,
+      'has_voice': hasVoice,
+      'voice_file_url': voice_file_url,
+      'transcript': transcript,
+    };
   }
-
-  // Helper methods
-  bool get isVoice => messageType == 'voice';
-  bool get isText => messageType == 'text' || messageType == null;
 }
 class Pagination {
   int? page;

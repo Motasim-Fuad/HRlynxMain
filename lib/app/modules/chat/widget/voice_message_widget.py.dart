@@ -191,247 +191,221 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
             mainAxisSize: MainAxisSize.min,
             children: [
               // Enhanced Play/Pause button with pulse animation
-              // Using GetBuilder instead of Obx for better performance and reliability
-              GetBuilder<VoiceService>(
-                builder: (voiceService) {
-                  final isThisPlaying = widget.voiceUrl != null &&
-                      widget.voiceUrl!.isNotEmpty &&
-                      voiceService.isPlayingUrl(widget.voiceUrl!);
+              // FIX 1: Use Obx instead of GetBuilder for reactive updates
+              Obx(() {
+                final isThisPlaying = widget.voiceUrl != null &&
+                    widget.voiceUrl!.isNotEmpty &&
+                    widget.voiceService.isPlaying.value &&
+                    widget.voiceService.currentPlayingUrl.value == widget.voiceUrl;
 
-                  // Update animations
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _updateAnimations(isThisPlaying);
-                  });
+                print('🎵 Button state - isPlaying: ${widget.voiceService.isPlaying.value}, currentUrl: ${widget.voiceService.currentPlayingUrl.value}, thisUrl: ${widget.voiceUrl}, isThisPlaying: $isThisPlaying');
 
-                  return AnimatedBuilder(
-                    animation: _pulseAnimation,
-                    builder: (context, child) {
-                      return Transform.scale(
-                        scale: isThisPlaying ? _pulseAnimation.value : 1.0,
-                        child: GestureDetector(
-                          onTap: () async {
-                            if (widget.voiceUrl != null && widget.voiceUrl!.isNotEmpty) {
-                              print('🎵 Attempting to play: ${widget.voiceUrl}');
-                              try {
-                                if (isThisPlaying) {
-                                  await widget.voiceService.pauseVoiceMessage();
-                                } else {
-                                  await widget.voiceService.playVoiceMessage(widget.voiceUrl!);
-                                }
-                              } catch (e) {
-                                print('❌ Error playing voice: $e');
-                                Get.snackbar("Error", "Could not play voice message");
+                // Update animations
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _updateAnimations(isThisPlaying);
+                });
+
+                return AnimatedBuilder(
+                  animation: _pulseAnimation,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: isThisPlaying ? _pulseAnimation.value : 1.0,
+                      child: GestureDetector(
+                        onTap: () async {
+                          if (widget.voiceUrl != null && widget.voiceUrl!.isNotEmpty) {
+                            print('🎵 Button tapped - Current state: isPlaying=${widget.voiceService.isPlaying.value}, currentUrl=${widget.voiceService.currentPlayingUrl.value}');
+
+                            try {
+                              if (isThisPlaying) {
+                                print('🎵 Pausing current audio');
+                                await widget.voiceService.pauseVoiceMessage();
+                              } else {
+                                print('🎵 Playing new audio: ${widget.voiceUrl}');
+                                await widget.voiceService.playVoiceMessage(widget.voiceUrl!);
                               }
-                            } else {
-                              print('❌ No voice URL available');
-                              Get.snackbar("Error", "Voice file not available");
+                            } catch (e) {
+                              print('❌ Error playing voice: $e');
+                              Get.snackbar("Error", "Could not play voice message");
                             }
-                          },
-                          child: Container(
-                            padding: EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              gradient: isThisPlaying
-                                  ? LinearGradient(
-                                colors: widget.isUser
-                                    ? [Colors.orange.shade400, Colors.deepOrange.shade500]
-                                    : [Colors.green.shade400, Colors.teal.shade500],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              )
-                                  : LinearGradient(
-                                colors: widget.isUser
-                                    ? [Colors.blue.shade400, Colors.blue.shade600]
-                                    : [Colors.grey.shade500, Colors.grey.shade700],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                          } else {
+                            print('❌ No voice URL available');
+                            Get.snackbar("Error", "Voice file not available");
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            gradient: isThisPlaying
+                                ? LinearGradient(
+                              colors: widget.isUser
+                                  ? [Colors.orange.shade400, Colors.deepOrange.shade500]
+                                  : [Colors.green.shade400, Colors.teal.shade500],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                                : LinearGradient(
+                              colors: widget.isUser
+                                  ? [Colors.blue.shade400, Colors.blue.shade600]
+                                  : [Colors.grey.shade500, Colors.grey.shade700],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: isThisPlaying
+                                    ? (widget.isUser ? Colors.orange : Colors.green).withOpacity(0.4)
+                                    : Colors.black.withOpacity(0.2),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
                               ),
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: isThisPlaying
-                                      ? (widget.isUser ? Colors.orange : Colors.green).withOpacity(0.4)
-                                      : Colors.black.withOpacity(0.2),
-                                  blurRadius: 8,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              isThisPlaying ? Icons.pause : Icons.play_arrow,
-                              color: Colors.white,
-                              size: 24,
-                            ),
+                            ],
+                          ),
+                          child: Icon(
+                            isThisPlaying ? Icons.pause : Icons.play_arrow,
+                            color: Colors.white,
+                            size: 24,
                           ),
                         ),
-                      );
-                    },
-                  );
-                },
-              ),
+                      ),
+                    );
+                  },
+                );
+              }),
 
               SizedBox(width: 12),
 
               // Enhanced animated waveform with multiple colors
+              // FIX 2: Use Obx for reactive wave updates
               Expanded(
                 child: Container(
                   height: 40,
-                  child: GetBuilder<VoiceService>(
-                    builder: (voiceService) {
-                      final isThisPlaying = widget.voiceUrl != null &&
-                          widget.voiceUrl!.isNotEmpty &&
-                          voiceService.isPlayingUrl(widget.voiceUrl!);
+                  child: Obx(() {
+                    final isThisPlaying = widget.voiceUrl != null &&
+                        widget.voiceUrl!.isNotEmpty &&
+                        widget.voiceService.isPlaying.value &&
+                        widget.voiceService.currentPlayingUrl.value == widget.voiceUrl;
 
-                      return AnimatedBuilder(
-                        animation: Listenable.merge([
-                          _waveAnimation,
-                          _colorAnimationController,
-                        ]),
-                        builder: (context, child) {
-                          return Row(
-                            children: List.generate(_waveCount, (index) {
-                              double baseHeight = _waveHeights[index];
-                              double animatedHeight = baseHeight;
+                    return AnimatedBuilder(
+                      animation: Listenable.merge([
+                        _waveAnimation,
+                        _colorAnimationController,
+                      ]),
+                      builder: (context, child) {
+                        return Row(
+                          children: List.generate(_waveCount, (index) {
+                            double baseHeight = _waveHeights[index];
+                            double animatedHeight = baseHeight;
 
-                              if (isThisPlaying) {
-                                // Create more complex wave pattern
-                                double waveOffset = (_waveAnimation.value) + (index * 0.3);
-                                double multiplier1 = (1 + math.sin(waveOffset)) / 2;
-                                double multiplier2 = (1 + math.cos(waveOffset * 0.7)) / 2;
-                                double finalMultiplier = (multiplier1 * 0.7 + multiplier2 * 0.3);
+                            if (isThisPlaying) {
+                              // Create more complex wave pattern
+                              double waveOffset = (_waveAnimation.value) + (index * 0.3);
+                              double multiplier1 = (1 + math.sin(waveOffset)) / 2;
+                              double multiplier2 = (1 + math.cos(waveOffset * 0.7)) / 2;
+                              double finalMultiplier = (multiplier1 * 0.7 + multiplier2 * 0.3);
 
-                                animatedHeight = baseHeight * (0.3 + finalMultiplier * 0.7);
+                              animatedHeight = baseHeight * (0.3 + finalMultiplier * 0.7);
 
-                                // Add some randomness for more natural feel
-                                if (index % 4 == 0) {
-                                  animatedHeight *= 1.2;
-                                }
-                              } else {
-                                // Static wave when not playing
-                                animatedHeight = baseHeight * 0.4;
+                              // Add some randomness for more natural feel
+                              if (index % 4 == 0) {
+                                animatedHeight *= 1.2;
                               }
+                            } else {
+                              // Static wave when not playing
+                              animatedHeight = baseHeight * 0.4;
+                            }
 
-                              return Expanded(
-                                child: Container(
-                                  margin: EdgeInsets.symmetric(horizontal: 1),
-                                  child: AnimatedContainer(
-                                    duration: Duration(milliseconds: 100),
-                                    height: animatedHeight.clamp(6.0, 32.0),
-                                    decoration: BoxDecoration(
-                                      gradient: isThisPlaying
-                                          ? LinearGradient(
-                                        colors: [
-                                          _getWaveColor(index, isThisPlaying),
-                                          _getWaveColor(index, isThisPlaying).withOpacity(0.6),
-                                        ],
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                      )
-                                          : null,
-                                      color: isThisPlaying
-                                          ? null
-                                          : _getWaveColor(index, isThisPlaying),
-                                      borderRadius: BorderRadius.circular(3),
-                                      boxShadow: isThisPlaying
-                                          ? [
-                                        BoxShadow(
-                                          color: _getWaveColor(index, isThisPlaying).withOpacity(0.3),
-                                          blurRadius: 2,
-                                          offset: Offset(0, 1),
-                                        ),
-                                      ]
-                                          : null,
-                                    ),
+                            // FIX 3: Ensure colors are properly applied
+                            Color waveColor = _getWaveColor(index, isThisPlaying);
+
+                            return Expanded(
+                              child: Container(
+                                margin: EdgeInsets.symmetric(horizontal: 1),
+                                child: AnimatedContainer(
+                                  duration: Duration(milliseconds: 100),
+                                  height: animatedHeight.clamp(6.0, 32.0),
+                                  decoration: BoxDecoration(
+                                    gradient: isThisPlaying
+                                        ? LinearGradient(
+                                      colors: [
+                                        waveColor,
+                                        waveColor.withOpacity(0.6),
+                                      ],
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                    )
+                                        : null,
+                                    color: isThisPlaying ? null : waveColor,
+                                    borderRadius: BorderRadius.circular(3),
+                                    boxShadow: isThisPlaying
+                                        ? [
+                                      BoxShadow(
+                                        color: waveColor.withOpacity(0.4),
+                                        blurRadius: 3,
+                                        offset: Offset(0, 1),
+                                      ),
+                                    ]
+                                        : [],
                                   ),
                                 ),
-                              );
-                            }),
-                          );
-                        },
-                      );
-                    },
-                  ),
+                              ),
+                            );
+                          }),
+                        );
+                      },
+                    );
+                  }),
                 ),
               ),
 
               SizedBox(width: 12),
 
               // Enhanced duration display
-              GetBuilder<VoiceService>(
-                builder: (voiceService) {
-                  final isThisPlaying = widget.voiceUrl != null &&
-                      widget.voiceUrl!.isNotEmpty &&
-                      voiceService.isPlayingUrl(widget.voiceUrl!);
-                  final duration = voiceService.totalDuration.value;
-                  final position = voiceService.playbackPosition.value;
+              Obx(() {
+                final isThisPlaying = widget.voiceUrl != null &&
+                    widget.voiceUrl!.isNotEmpty &&
+                    widget.voiceService.isPlaying.value &&
+                    widget.voiceService.currentPlayingUrl.value == widget.voiceUrl;
 
-                  String timeText = "0:15"; // Default duration
+                final duration = widget.voiceService.totalDuration.value;
+                final position = widget.voiceService.playbackPosition.value;
 
-                  if (isThisPlaying && duration.inSeconds > 0) {
-                    final remaining = duration - position;
-                    final minutes = remaining.inMinutes;
-                    final seconds = remaining.inSeconds % 60;
-                    timeText = "$minutes:${seconds.toString().padLeft(2, '0')}";
-                  } else if (duration.inSeconds > 0) {
-                    // Show total duration when not playing
-                    final minutes = duration.inMinutes;
-                    final seconds = duration.inSeconds % 60;
-                    timeText = "$minutes:${seconds.toString().padLeft(2, '0')}";
-                  }
+                String timeText = "0:15"; // Default duration
 
-                  return Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
+                if (isThisPlaying && duration.inSeconds > 0) {
+                  final remaining = duration - position;
+                  final minutes = remaining.inMinutes;
+                  final seconds = remaining.inSeconds % 60;
+                  timeText = "$minutes:${seconds.toString().padLeft(2, '0')}";
+                } else if (duration.inSeconds > 0) {
+                  // Show total duration when not playing
+                  final minutes = duration.inMinutes;
+                  final seconds = duration.inSeconds % 60;
+                  timeText = "$minutes:${seconds.toString().padLeft(2, '0')}";
+                }
+
+                return Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isThisPlaying
+                        ? (widget.isUser ? Colors.orange.shade100 : Colors.green.shade100)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    timeText,
+                    style: TextStyle(
+                      fontSize: 11,
                       color: isThisPlaying
-                          ? (widget.isUser ? Colors.orange.shade100 : Colors.green.shade100)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
+                          ? (widget.isUser ? Colors.orange.shade800 : Colors.green.shade800)
+                          : Colors.grey.shade600,
+                      fontWeight: isThisPlaying ? FontWeight.w600 : FontWeight.w500,
                     ),
-                    child: Text(
-                      timeText,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isThisPlaying
-                            ? (widget.isUser ? Colors.orange.shade800 : Colors.green.shade800)
-                            : Colors.grey.shade600,
-                        fontWeight: isThisPlaying ? FontWeight.w600 : FontWeight.w500,
-                      ),
-                    ),
-                  );
-                },
-              ),
+                  ),
+                );
+              }),
             ],
           ),
-
-          // Enhanced transcript text
-          if (widget.transcript != null && widget.transcript!.isNotEmpty) ...[
-            SizedBox(height: 12),
-            Container(
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: widget.isUser
-                    ? Colors.blue.shade50
-                    : Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: widget.isUser
-                      ? Colors.blue.shade200
-                      : Colors.grey.shade200,
-                  width: 1,
-                ),
-              ),
-              child: Text(
-                widget.transcript!,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.grey.shade700,
-                  height: 1.3,
-                ),
-              ),
-            ),
-          ],
-
-          // Enhanced timestamp
           SizedBox(height: 6),
           Text(
             widget.timestamp,
