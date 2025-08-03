@@ -44,6 +44,32 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
     super.initState();
     _initializeWaveHeights();
     _setupAnimations();
+    _setupVoiceServiceListener();
+  }
+
+  void _setupVoiceServiceListener() {
+    // Listen to voice service changes and update animations accordingly
+    ever(widget.voiceService.isPlaying, (isPlaying) {
+      if (!_isDisposed) {
+        final isThisPlaying = widget.voiceUrl != null &&
+            widget.voiceUrl!.isNotEmpty &&
+            isPlaying &&
+            widget.voiceService.currentPlayingUrl.value == widget.voiceUrl;
+
+        _updateAnimations(isThisPlaying);
+      }
+    });
+
+    ever(widget.voiceService.currentPlayingUrl, (currentUrl) {
+      if (!_isDisposed) {
+        final isThisPlaying = widget.voiceUrl != null &&
+            widget.voiceUrl!.isNotEmpty &&
+            widget.voiceService.isPlaying.value &&
+            currentUrl == widget.voiceUrl;
+
+        _updateAnimations(isThisPlaying);
+      }
+    });
   }
 
   void _initializeWaveHeights() {
@@ -124,8 +150,6 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
   }
 
   void _updateAnimations(bool isPlaying) {
-    if (_isDisposed) return;
-
     if (isPlaying) {
       // Start all animations when playing
       if (!_waveAnimationController.isAnimating) {
@@ -191,7 +215,6 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
             mainAxisSize: MainAxisSize.min,
             children: [
               // Enhanced Play/Pause button with pulse animation
-              // FIX 1: Use Obx instead of GetBuilder for reactive updates
               Obx(() {
                 final isThisPlaying = widget.voiceUrl != null &&
                     widget.voiceUrl!.isNotEmpty &&
@@ -199,11 +222,6 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
                     widget.voiceService.currentPlayingUrl.value == widget.voiceUrl;
 
                 print('🎵 Button state - isPlaying: ${widget.voiceService.isPlaying.value}, currentUrl: ${widget.voiceService.currentPlayingUrl.value}, thisUrl: ${widget.voiceUrl}, isThisPlaying: $isThisPlaying');
-
-                // Update animations
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _updateAnimations(isThisPlaying);
-                });
 
                 return AnimatedBuilder(
                   animation: _pulseAnimation,
@@ -223,6 +241,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
                                 print('🎵 Playing new audio: ${widget.voiceUrl}');
                                 await widget.voiceService.playVoiceMessage(widget.voiceUrl!);
                               }
+
                             } catch (e) {
                               print('❌ Error playing voice: $e');
                               Get.snackbar("Error", "Could not play voice message");
@@ -272,11 +291,9 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
                   },
                 );
               }),
-
               SizedBox(width: 12),
 
               // Enhanced animated waveform with multiple colors
-              // FIX 2: Use Obx for reactive wave updates
               Expanded(
                 child: Container(
                   height: 40,
@@ -315,7 +332,6 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
                               animatedHeight = baseHeight * 0.4;
                             }
 
-                            // FIX 3: Ensure colors are properly applied
                             Color waveColor = _getWaveColor(index, isThisPlaying);
 
                             return Expanded(

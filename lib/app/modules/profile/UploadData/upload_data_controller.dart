@@ -61,14 +61,14 @@ class UploadDataController extends GetxController {
       Get.snackbar("Error", "Please enter your phone number");
       return;
     }
-    if (selectedGender.value.isEmpty) {
-      Get.snackbar("Error", "Please select your gender");
-      return;
-    }
-    if (dateOfBirth.value.isEmpty) {
-      Get.snackbar("Error", "Please select your date of birth");
-      return;
-    }
+    // if (selectedGender.value.isEmpty) {
+    //   Get.snackbar("Error", "Please select your gender");
+    //   return;
+    // }
+    // if (dateOfBirth.value.isEmpty) {
+    //   Get.snackbar("Error", "Please select your date of birth");
+    //   return;
+    // }
 
     try {
       isLoading.value = true;

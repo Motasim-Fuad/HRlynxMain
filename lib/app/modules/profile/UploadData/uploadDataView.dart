@@ -74,39 +74,39 @@ class UploadDataView extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
 
-                  // Date of Birth
-                  GestureDetector(
-                    onTap: controller.isLoading.value
-                        ? null
-                        : () => controller.pickDate(context),
-                    child: AbsorbPointer(
-                      child: CustomTextFormField(
-                        controller: dobController
-                          ..text = controller.dateOfBirth.value,
-                        hintText: "Select your birth date",
-                        suffixIcon: const Icon(Icons.calendar_month),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
+                  // // Date of Birth
+                  // GestureDetector(
+                  //   onTap: controller.isLoading.value
+                  //       ? null
+                  //       : () => controller.pickDate(context),
+                  //   child: AbsorbPointer(
+                  //     child: CustomTextFormField(
+                  //       controller: dobController
+                  //         ..text = controller.dateOfBirth.value,
+                  //       hintText: "Select your birth date",
+                  //       suffixIcon: const Icon(Icons.calendar_month),
+                  //     ),
+                  //   ),
+                  // ),
+                  // const SizedBox(height: 10),
 
                   // Gender Radio Buttons
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                          "Gender",
-                          style: TextStyle(fontWeight: FontWeight.bold)
-                      ),
-                      Row(
-                        children: [
-                          _genderOption("Male", controller),
-                          _genderOption("Female", controller),
-                          _genderOption("Other", controller),
-                        ],
-                      )
-                    ],
-                  ),
+                  // Column(
+                  //   crossAxisAlignment: CrossAxisAlignment.start,
+                  //   children: [
+                  //     const Text(
+                  //         "Gender",
+                  //         style: TextStyle(fontWeight: FontWeight.bold)
+                  //     ),
+                  //     Row(
+                  //       children: [
+                  //         _genderOption("Male", controller),
+                  //         _genderOption("Female", controller),
+                  //         _genderOption("Other", controller),
+                  //       ],
+                  //     )
+                  //   ],
+                  // ),
 
                   const SizedBox(height: 20),
 
