@@ -28,6 +28,15 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
   final bool isNewSession;
   var sessionHistory = <SessionHistory>[].obs;
 
+  static const int MESSAGE_LIMIT = 20;
+
+  // Add this getter to access MESSAGE_LIMIT from instances
+  int get messageLimit => MESSAGE_LIMIT;
+  var userMessageCount = 0.obs;
+  var isSessionLimitReached = false.obs;
+  var showLimitWarning = false.obs;
+
+
 
   final ScrollController scrollController = ScrollController();
 
@@ -231,6 +240,70 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
     }
   }
 
+
+  void _updateUserMessageCount() {
+    userMessageCount.value = messages.where((msg) => msg.isUser == true).length;
+    isSessionLimitReached.value = userMessageCount.value >= MESSAGE_LIMIT;
+
+    // Show warning when approaching limit (at 18 messages)
+    if (userMessageCount.value >= 18 && userMessageCount.value < MESSAGE_LIMIT) {
+      showLimitWarning.value = true;
+    }
+
+    print('📊 User messages: ${userMessageCount.value}/$MESSAGE_LIMIT');
+    print('🚫 Limit reached: ${isSessionLimitReached.value}');
+  }
+
+
+  void showLimitReachedDialog() {
+    Get.dialog(
+      AlertDialog(
+        title: Text('Session Limit Reached'),
+        content: Text('You have reached the maximum of $MESSAGE_LIMIT messages for this session. Please create a new session to continue chatting.'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('OK'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              // You can add navigation to new session here if needed
+            },
+            child: Text('Create New Session'),
+          ),
+        ],
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  void showWarningDialog() {
+    Get.dialog(
+      AlertDialog(
+        title: Text('Approaching Session Limit'),
+        content: Text('You have ${MESSAGE_LIMIT - userMessageCount.value} messages remaining in this session.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Get.back();
+              showLimitWarning.value = false;
+            },
+            child: Text('Continue'),
+          ),
+          // ElevatedButton(
+          //   onPressed: () {
+          //     Get.back();
+          //     showLimitWarning.value = false;
+          //   },
+          //   child: Text('Create New Session'),
+          // ),
+        ],
+      ),
+    );
+  }
+
+
   void _handleConnectionError() {
     isTyping.value = false;
     // Try to reconnect after a delay
@@ -266,17 +339,15 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
       final model = SessonChatHistoryModel.fromJson(response);
       session.value = model.session;
 
-      print("************$response");
-
       // Clear existing messages
       messages.clear();
 
       if (model.messages != null && model.messages!.isNotEmpty) {
-        // Sort messages by ID first
+        // Your existing message processing logic here...
+        // (keeping your duplicate removal logic)
+
         List<Messages> sortedMessages = List.from(model.messages!);
         sortedMessages.sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0));
-
-        print("🔍 Processing ${sortedMessages.length} messages for duplicates");
 
         List<Messages> filteredMessages = [];
         Set<String> processedContents = <String>{};
@@ -290,47 +361,31 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
             continue;
           }
 
-          print("📋 Message ${currentMessage.id}: '${content.substring(0, math.min(30, content.length))}...'");
-          print("  - isVoice: ${currentMessage.isVoice}");
-          print("  - hasVoice: ${currentMessage.hasVoice}");
-          print("  - messageType: ${currentMessage.messageType}");
-
-          // Check if we've already processed this content
           if (processedContents.contains(content)) {
-            print("🚫 Skipping duplicate message ${currentMessage.id}");
             continue;
           }
 
-          // Look ahead for messages with the same content
           List<Messages> duplicateMessages = [currentMessage];
 
-          // Check next few messages for duplicates (usually within 5 messages)
           for (int j = i + 1; j < math.min(i + 6, sortedMessages.length); j++) {
             final nextMessage = sortedMessages[j];
             if (nextMessage.content?.trim() == content) {
               duplicateMessages.add(nextMessage);
-              print("🔍 Found duplicate: message ${nextMessage.id}");
             }
           }
 
           if (duplicateMessages.length > 1) {
-            print("🔄 Processing ${duplicateMessages.length} duplicate messages");
-
-            // Find the best message to keep (prioritize voice)
             Messages? voiceMessage;
             Messages? textMessage;
 
             for (var msg in duplicateMessages) {
               if (_isVoiceMessage(msg)) {
                 voiceMessage = msg;
-                print("  🎤 Found voice version: ${msg.id}");
               } else {
                 textMessage = msg;
-                print("  📝 Found text version: ${msg.id}");
               }
             }
 
-            // Choose voice over text
             Messages selectedMessage;
             if (voiceMessage != null) {
               selectedMessage = Messages(
@@ -343,36 +398,22 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
                 voice_file_url: voiceMessage.voice_file_url,
                 transcript: voiceMessage.transcript ?? voiceMessage.content,
               );
-              print("✅ Selected VOICE message ${voiceMessage.id}");
-
-              // Log what we're hiding
-              for (var duplicate in duplicateMessages) {
-                if (duplicate.id != voiceMessage.id) {
-                  print("🚫 Hiding duplicate message ${duplicate.id}");
-                }
-              }
             } else {
               selectedMessage = textMessage!;
-              print("✅ Selected TEXT message ${textMessage!.id} (no voice version)");
             }
 
             filteredMessages.add(selectedMessage);
           } else {
-            // Single message, keep as is
             filteredMessages.add(currentMessage);
-            print("✅ Keeping single message ${currentMessage.id}");
           }
 
           processedContents.add(content);
         }
 
         messages.assignAll(filteredMessages);
-        print('📥 Final result: ${filteredMessages.length} messages (removed ${sortedMessages.length - filteredMessages.length} duplicates)');
 
-        // Debug final list
-        final voiceCount = filteredMessages.where((msg) => msg.isVoice).length;
-        print('🎤 Voice messages: $voiceCount');
-        print('📝 Text messages: ${filteredMessages.length - voiceCount}');
+        // Update message count after loading messages
+        _updateUserMessageCount();
       }
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -507,6 +548,12 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
   }
 
   void send(String msg) {
+    // Check if limit is reached
+    if (isSessionLimitReached.value) {
+      showLimitReachedDialog(); // Remove underscore
+      return;
+    }
+
     showSuggestions.value = false;
 
     // Add user message to UI immediately for better UX
@@ -520,6 +567,14 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
     messages.add(userMessage);
     print('📤 Added user message to UI: $msg');
 
+    // Update message count after adding user message
+    _updateUserMessageCount();
+
+    // Show warning if approaching limit
+    if (showLimitWarning.value) {
+      showWarningDialog(); // Remove underscore
+    }
+
     // Force UI update
     update();
     messages.refresh();
@@ -532,7 +587,6 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
     if (!wsService.isConnected) {
       print('❌ WebSocket not connected, attempting to reconnect...');
 
-      // Try to reconnect
       _attemptReconnect().then((_) {
         if (wsService.isConnected) {
           wsService.sendMessage(msg);
@@ -551,6 +605,7 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
       print('📤 Message sent: $msg');
     }
   }
+
 
   Future<void> _attemptReconnect() async {
     try {
@@ -580,9 +635,14 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
   }
   // Add these methods to your existing ChatController class
 
-// Replace your sendVoiceMessage method in ChatController with this:
-
+  // Modified sendVoiceMessage method with limit check
   Future<void> sendVoiceMessage(String sessionId) async {
+    // Check if limit is reached
+    if (isSessionLimitReached.value) {
+      showLimitReachedDialog(); // Remove underscore
+      return;
+    }
+
     final voiceService = Get.find<VoiceService>();
 
     try {
@@ -604,16 +664,24 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
         // Add voice message to UI
         final voiceMessage = Messages(
           id: messageId,
-          content: data['transcript'], // The converted text
+          content: data['transcript'],
           isUser: true,
           createdAt: DateTime.now().toIso8601String(),
-          messageType: 'voice', // This will make isVoice return true
+          messageType: 'voice',
           voice_file_url: data['voice_url'],
           transcript: data['transcript'],
         );
 
         messages.add(voiceMessage);
         print('🎤 Added voice message to UI');
+
+        // Update message count after adding voice message
+        _updateUserMessageCount();
+
+        // Show warning if approaching limit
+        if (showLimitWarning.value) {
+          showWarningDialog(); // Remove underscore
+        }
 
         // Force UI update
         update();
@@ -623,7 +691,7 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
           scrollToBottom();
         });
 
-        // IMPORTANT: Send the transcript to WebSocket to get AI response
+        // Send the transcript to WebSocket to get AI response
         if (wsService.isConnected && data['transcript'] != null) {
           wsService.sendMessage(data['transcript']);
           print('📤 Sent transcript to AI: ${data['transcript']}');

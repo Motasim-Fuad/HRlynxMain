@@ -2,6 +2,7 @@
 import 'package:get/get.dart';
 import 'package:hr/app/api_servies/notification_services.dart';
 import 'package:hr/app/modules/log_in/log_in_view.dart';
+import 'package:hr/app/modules/splash_screen/splash_screen.dart';
 import '../../api_servies/repository/auth_repo.dart';
 import '../../api_servies/token.dart';
 
@@ -26,7 +27,7 @@ class LogoutController extends GetxController {
       Get.snackbar("Success", "Logged out successfully");
 
       // Navigate to login screen
-      Get.offAll(() => LogInView());
+      Get.offAll(() => SplashScreen());
 
     } catch (e) {
       Get.snackbar("Error", "Logout failed: ${e.toString()}");

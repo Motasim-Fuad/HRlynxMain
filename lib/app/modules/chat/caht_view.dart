@@ -409,6 +409,86 @@ class ChatView extends StatelessWidget {
               }
             }),
 
+
+            // Add this widget after your AI Guidance text and before the messages list:
+// Message limit indicator
+//             Obx(() {
+//               if (chatController.userMessageCount.value > 0) {
+//                 final remaining = ChatController.MESSAGE_LIMIT - chatController.userMessageCount.value; // Use ChatController.MESSAGE_LIMIT
+//                 final isNearLimit = remaining <= 2;
+//                 final isLimitReached = chatController.isSessionLimitReached.value;
+//
+//                 return Container(
+//                   margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+//                   padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+//                   decoration: BoxDecoration(
+//                     color: isLimitReached
+//                         ? Colors.red.shade100
+//                         : isNearLimit
+//                         ? Colors.orange.shade100
+//                         : Colors.blue.shade50,
+//                     borderRadius: BorderRadius.circular(8),
+//                     border: Border.all(
+//                       color: isLimitReached
+//                           ? Colors.red.shade300
+//                           : isNearLimit
+//                           ? Colors.orange.shade300
+//                           : Colors.blue.shade200,
+//                     ),
+//                   ),
+//                   child: Row(
+//                     children: [
+//                       Icon(
+//                         isLimitReached
+//                             ? Icons.block
+//                             : isNearLimit
+//                             ? Icons.warning
+//                             : Icons.info_outline,
+//                         color: isLimitReached
+//                             ? Colors.red.shade700
+//                             : isNearLimit
+//                             ? Colors.orange.shade700
+//                             : Colors.blue.shade700,
+//                         size: 16,
+//                       ),
+//                       SizedBox(width: 8),
+//                       Expanded(
+//                         child: Text(
+//                           isLimitReached
+//                               ? "Session limit reached (${chatController.userMessageCount.value}/${ChatController.MESSAGE_LIMIT}). Create a new session to continue."
+//                               : "Messages: ${chatController.userMessageCount.value}/${ChatController.MESSAGE_LIMIT} ${remaining <= 2 ? '($remaining remaining)' : ''}",
+//                           style: TextStyle(
+//                             fontSize: 12,
+//                             color: isLimitReached
+//                                 ? Colors.red.shade700
+//                                 : isNearLimit
+//                                 ? Colors.orange.shade700
+//                                 : Colors.blue.shade700,
+//                             fontWeight: isLimitReached ? FontWeight.w600 : FontWeight.normal,
+//                           ),
+//                         ),
+//                       ),
+//                       // if (isLimitReached)
+//                       //   TextButton(
+//                       //     onPressed: () {
+//                       //       Scaffold.of(context).openEndDrawer();
+//                       //     },
+//                       //     child: Text(
+//                       //       "New Session",
+//                       //       style: TextStyle(
+//                       //         fontSize: 12,
+//                       //         color: Colors.red.shade700,
+//                       //         fontWeight: FontWeight.w600,
+//                       //       ),
+//                       //     ),
+//                       //   ),
+//                     ],
+//                   ),
+//                 );
+//               }
+//               return SizedBox.shrink();
+//             }),
+
             // In your ChatView's build method, modify the Obx widget for suggestions:
             Obx(() {
               if ((chatController.isFirstTime.value || chatController.showSuggestions.value) &&
@@ -453,10 +533,11 @@ class ChatView extends StatelessWidget {
 
             const Divider(height: 1),
 // Replace your input section with this in ChatView
-            // Replace your input section with this in ChatView
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Obx(() {
+                final isLimitReached = chatController.isSessionLimitReached.value;
+
                 // Show voice recording widget when recording
                 if (voiceService.isRecording.value) {
                   return VoiceRecordingWidget(
@@ -465,7 +546,9 @@ class ChatView extends StatelessWidget {
                       await voiceService.cancelRecording();
                     },
                     onSend: () async {
-                      await chatController.sendVoiceMessage(sessionId);
+                      if (!isLimitReached) {
+                        await chatController.sendVoiceMessage(sessionId);
+                      }
                     },
                   );
                 }
@@ -494,21 +577,55 @@ class ChatView extends StatelessWidget {
                   );
                 }
 
-                // Show normal input row
+                // Show disabled input when limit reached
+                if (isLimitReached) {
+                  return Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(25),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            "Session limit reached. Create a new session to continue chatting.",
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontStyle: FontStyle.italic,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+
+                      ],
+                    ),
+                  );
+                }
+
+                // Show normal input row when not at limit
                 return Row(
                   children: [
                     Expanded(
                       child: TextField(
                         controller: textController,
+                        enabled: !isLimitReached,
                         decoration: InputDecoration(
-                          hintText: "Type a message...",
+                          hintText: isLimitReached
+                              ? "Session limit reached"
+                              : "Type a message...",
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                          filled: isLimitReached,
+                          fillColor: isLimitReached ? Colors.grey.shade100 : null,
                         ),
                         onTap: () {
-                          // Hide suggestions when user starts typing
+                          if (isLimitReached) {
+                            chatController.showLimitReachedDialog();
+                          }
                         },
                       ),
                     ),
@@ -516,19 +633,26 @@ class ChatView extends StatelessWidget {
 
                     // Voice button
                     IconButton(
-                      onPressed: () async {
+                      onPressed: isLimitReached ? null : () async {
                         final started = await voiceService.startRecording();
                         if (!started) {
                           Get.snackbar("Error", "Could not start recording");
                         }
                       },
-                      icon: Icon(Icons.mic),
+                      icon: Icon(
+                        Icons.mic,
+                        color: isLimitReached ? Colors.grey : null,
+                      ),
+                      tooltip: isLimitReached ? "Session limit reached" : "Record voice message",
                     ),
 
                     // Send button
                     IconButton(
-                      icon: const Icon(Icons.send),
-                      onPressed: () {
+                      icon: Icon(
+                        Icons.send,
+                        color: isLimitReached ? Colors.grey : null,
+                      ),
+                      onPressed: isLimitReached ? null : () {
                         final text = textController.text.trim();
                         if (text.isNotEmpty) {
                           chatController.send(text);
@@ -537,6 +661,7 @@ class ChatView extends StatelessWidget {
                           chatController.isFirstTime.value = false;
                         }
                       },
+                      tooltip: isLimitReached ? "Session limit reached" : "Send message",
                     ),
                   ],
                 );
