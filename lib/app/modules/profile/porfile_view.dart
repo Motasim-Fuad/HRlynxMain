@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:hr/app/common_widgets/button.dart';
 import 'package:hr/app/common_widgets/privacy_policy.dart';
 import 'package:hr/app/modules/change_password/change_password.dart' show ChangePassword;
+import 'package:hr/app/modules/home/chat_al_ai_persona_controller.dart';
 import 'package:hr/app/modules/home/user_isSubcriptionController.dart';
 import 'package:hr/app/modules/log_in/user_controller.dart';
 import 'package:hr/app/modules/notification/notification_view.dart';
@@ -262,8 +263,13 @@ class ProfileView extends StatelessWidget {
                               textAlign: TextAlign.center,
                             ),
                             SizedBox(height: 12),
+                            // Replace the reactivation button onPressed handler in ProfileView
+
+                            // Replace the reactivation button onPressed handler in your ProfileView
+
                             ElevatedButton(
                               onPressed: () async {
+                                // Show loading dialog
                                 Get.dialog(
                                   Center(
                                     child: Card(
@@ -284,17 +290,54 @@ class ProfileView extends StatelessWidget {
                                 );
 
                                 try {
+                                  // Call the reactivate subscription API
+                                  bool success = await subController.reactivateSubscription();
+
                                   Get.back(); // Close loading dialog
-                                  await Get.to(() => PaymentView());
-                                  await subController.checkAndUpdateSubscriptionStatus();
+
+                                  if (success) {
+                                    // Refresh home page data
+                                    try {
+                                      final homeController = Get.find<ChatAllAiPersona>();
+                                      await homeController.refreshAfterSubscriptionChange();
+                                    } catch (e) {
+                                      print("Home controller not found, data will refresh on next visit: $e");
+                                    }
+
+                                    // Show success message
+                                    Get.snackbar(
+                                      'Subscription Reactivated!',
+                                      'Your subscription has been reactivated successfully. You now have full access to all personas.',
+                                      snackPosition: SnackPosition.TOP,
+                                      backgroundColor: Colors.green,
+                                      colorText: Colors.white,
+                                      duration: Duration(seconds: 4),
+                                      icon: Icon(Icons.check_circle, color: Colors.white),
+                                    );
+                                  } else {
+                                    // Show error message if reactivation failed
+                                    Get.snackbar(
+                                      'Reactivation Failed',
+                                      'Failed to reactivate subscription. Please try again or contact support.',
+                                      snackPosition: SnackPosition.TOP,
+                                      backgroundColor: Colors.red,
+                                      colorText: Colors.white,
+                                      duration: Duration(seconds: 4),
+                                      icon: Icon(Icons.error, color: Colors.white),
+                                    );
+                                  }
                                 } catch (e) {
                                   Get.back(); // Close loading dialog if still open
+
+                                  // Show error message
                                   Get.snackbar(
                                     'Error',
-                                    'Failed to reactivate subscription. Please try again.',
+                                    'An error occurred while reactivating subscription. Please try again.',
                                     snackPosition: SnackPosition.TOP,
                                     backgroundColor: Colors.red,
                                     colorText: Colors.white,
+                                    duration: Duration(seconds: 3),
+                                    icon: Icon(Icons.error, color: Colors.white),
                                   );
                                 }
                               },

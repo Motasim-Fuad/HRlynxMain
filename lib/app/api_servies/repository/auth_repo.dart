@@ -388,6 +388,31 @@ class AuthRepository {
     }
   }
 
+
+  Future<dynamic> reactivateSubscription() async {
+    try {
+      String url = "${ApiConstants.baseUrl}/api/subscription/reactivate/";
+      print('🔗 Reactivating subscription: $url');
+
+      final response = await NetworkApiServices.postApi(
+        url,
+        {}, // Empty body or add required parameters
+        withAuth: true,
+        tokenType: 'login',
+      );
+
+      if (response != null) {
+        print('✅ Reactivate subscription response: $response');
+        return response;
+      }
+
+      return response;
+    } catch (e) {
+      print('❌ Error reactivating subscription: $e');
+      rethrow; // Re-throw the error so controller can handle it
+    }
+  }
+
 // Payment methods management
   Future<dynamic> getPaymentMethods() async {
     try {

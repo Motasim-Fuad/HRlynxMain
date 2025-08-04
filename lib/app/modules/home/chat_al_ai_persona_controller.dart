@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../api_servies/token.dart';
 import '../../api_servies/webSocketServices.dart';
@@ -5,6 +6,7 @@ import '../../api_servies/repository/auth_repo.dart';
 import '../../model/home/chat_al_ai_persona.dart';
 import '../chat/caht_view.dart';
 import '../chat/chat_controller.dart';
+import '../home/user_isSubcriptionController.dart';
 
 class ChatAllAiPersona extends GetxController {
   var personaList = <Data>[].obs;
@@ -83,7 +85,35 @@ class ChatAllAiPersona extends GetxController {
     }
   }
 
+  // Fixed method name - should be fetchAllAiPersona, not getAllAiPersona
+  Future<void> refreshAfterSubscriptionChange() async {
+    try {
+      print("🔄 Refreshing data after subscription change...");
+
+      // Refresh subscription status
+      try {
+        final subController = Get.find<UserIsSubcribedController>();
+        await subController.checkAndUpdateSubscriptionStatus();
+      } catch (e) {
+        print("⚠️ UserIsSubcribedController not found: $e");
+      }
+
+      // Refresh persona list
+      await fetchAllAiPersona();
+
+      print("✅ Data refreshed successfully");
+    } catch (e) {
+      print("❌ Error refreshing data: $e");
+    }
+  }
+
+  // Optional: Add a method to clear session cache if needed
+  void clearSessionCache() {
+    _sessionMap.clear();
+  }
+
+  // Optional: Add a method to get cached session
+  String? getCachedSession(int personaId) {
+    return _sessionMap[personaId];
+  }
 }
-
-
-

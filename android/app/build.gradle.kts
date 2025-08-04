@@ -32,7 +32,6 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true  // Add this for Stripe
-
     }
 
     buildTypes {
@@ -59,10 +58,18 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-process:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
 
-    // ✅ Google Pay and Google Play Services dependencies
+    // ✅ UPDATED Google Pay and Google Play Services dependencies
     implementation("com.google.android.gms:play-services-wallet:19.2.1")
     implementation("com.google.android.gms:play-services-base:18.3.0")
     implementation("com.google.android.gms:play-services-tasks:18.0.2")
+
+    // ✅ Additional Google Play Services for better compatibility
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+    implementation("com.google.android.gms:play-services-identity:18.0.1")
+
+    // ✅ AndroidX dependencies for Google Pay
+    implementation("androidx.browser:browser:1.7.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 }
 
 flutter {

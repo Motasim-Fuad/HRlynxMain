@@ -148,19 +148,38 @@ class UserIsSubcribedController extends GetxController {
   }
 
   // Reactivate subscription method
-  Future<void> reactivateSubscription() async {
+  Future<bool> reactivateSubscription() async {
     try {
       print("🔄 Reactivating subscription...");
 
-      // Call your reactivation API endpoint here
-      // final response = await authRepo.reactivateSubscription();
+      final response = await authRepo.reactivateSubscription();
 
-      // For now, just re-check the status
-      await checkAndUpdateSubscriptionStatus();
+      if (response != null && response['success'] == true) {
+        print("✅ Subscription reactivated successfully");
 
+        // Update local state immediately after successful reactivation
+        isCanceled.value = false;
+        isActive.value = true;
+        isSubscribed.value = true; // User should now have full access
+        showReactivateButton.value = false;
+        hasPremiumAccess.value = true;
+
+        // Re-check subscription status to get the latest state from server
+        await checkAndUpdateSubscriptionStatus();
+
+        print("   isSubscribed after reactivation: ${isSubscribed.value}");
+        print("   isCanceled: ${isCanceled.value}");
+        print("   isActive: ${isActive.value}");
+        print("   hasPremiumAccess: ${hasPremiumAccess.value}");
+
+        return true;
+      } else {
+        print("❌ Failed to reactivate subscription");
+        return false;
+      }
     } catch (e) {
       print("❌ Error reactivating subscription: $e");
-      rethrow;
+      return false; // Return false instead of rethrow for better error handling
     }
   }
 
