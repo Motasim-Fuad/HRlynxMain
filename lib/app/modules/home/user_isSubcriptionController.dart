@@ -62,9 +62,9 @@ class UserIsSubcribedController extends GetxController {
         subscriptionStatus.value = data['subscription_state'] ?? '';
         showReactivateButton.value = data['show_reactivate_button'] ?? false;
 
-        // Update isSubscribed based on the correct logic:
-        // isSubscribed = true when is_active = true AND is_canceled = false
-        // This means user has full access to all personas
+        // FIXED: Update isSubscribed based on the correct logic:
+        // isSubscribed = true when user has full access to all personas
+        // This happens when subscription is active AND not canceled
         isSubscribed.value = isActive.value && !isCanceled.value;
 
         print("📊 Subscription Status Update:");
@@ -194,65 +194,59 @@ class UserIsSubcribedController extends GetxController {
     return showReactivateButton.value;
   }
 
-  // Check if a specific persona is accessible - THIS IS THE KEY METHOD
+  // FIXED: Check if a specific persona is accessible - THIS IS THE KEY METHOD
   Future<bool> isPersonaAccessible(int personaId) async {
-    // Case 1: is_active = true AND is_canceled = false
+    print("🔍 Checking accessibility for persona ID: $personaId");
+    print("   Current state - isActive: ${isActive.value}, isCanceled: ${isCanceled.value}");
+
+    // Case 1: Full subscription access (is_active = true AND is_canceled = false)
     // User has full subscription access - all personas available
     if (isActive.value && !isCanceled.value) {
       print("🟢 Full access: is_active=true, is_canceled=false - All personas accessible");
       return true;
     }
 
-    // Case 2: is_active = true AND is_canceled = true
-    // User canceled but still in trial/grace period - only selected persona accessible
-    else if (isActive.value && isCanceled.value) {
-      print("🟡 Limited access: is_active=true, is_canceled=true - Only selected persona accessible");
+    // Case 2 & 3: Limited access (is_canceled = true OR is_active = false)
+    // User has canceled subscription or no subscription - only selected persona accessible
+    print("🟡 Limited access: Only selected persona accessible");
 
-      // Get the selected persona ID from onboarding (stored in TokenStorage)
-      final selectedPersonaId = await TokenStorage.getSelectedPersonaId();
+    // First, try to get the selected persona ID from TokenStorage (onboarding selection)
+    final selectedPersonaId = await TokenStorage.getSelectedPersonaId();
+    print("   TokenStorage selected persona ID: $selectedPersonaId");
 
-      if (selectedPersonaId != null) {
-        bool hasAccess = selectedPersonaId == personaId;
-        print("   Selected persona ID: $selectedPersonaId, Checking persona ID: $personaId, Has access: $hasAccess");
-        return hasAccess;
-      } else {
-        // Fallback to API selected persona if no onboarding selection found
-        bool hasAccess = selectedPersona.value?.id == personaId;
-        print("   Using API selected persona: ${selectedPersona.value?.id}, Checking persona ID: $personaId, Has access: $hasAccess");
-        return hasAccess;
-      }
+    if (selectedPersonaId != null) {
+      bool hasAccess = selectedPersonaId == personaId;
+      print("   Using TokenStorage: personaId=$personaId, selectedId=$selectedPersonaId, hasAccess=$hasAccess");
+      return hasAccess;
     }
 
-    // Case 3: is_active = false (no subscription or expired)
-    // Only selected persona accessible
-    else {
-      print("🔴 No subscription: is_active=false - Only selected persona accessible");
+    // Fallback to API selected persona if no onboarding selection found
+    final apiSelectedPersonaId = selectedPersona.value?.id;
+    print("   API selected persona ID: $apiSelectedPersonaId");
 
-      // Get the selected persona ID from onboarding (stored in TokenStorage)
-      final selectedPersonaId = await TokenStorage.getSelectedPersonaId();
-
-      if (selectedPersonaId != null) {
-        bool hasAccess = selectedPersonaId == personaId;
-        print("   Selected persona ID: $selectedPersonaId, Checking persona ID: $personaId, Has access: $hasAccess");
-        return hasAccess;
-      } else {
-        // Fallback to API selected persona if no onboarding selection found
-        bool hasAccess = selectedPersona.value?.id == personaId;
-        print("   Using API selected persona: ${selectedPersona.value?.id}, Checking persona ID: $personaId, Has access: $hasAccess");
-        return hasAccess;
-      }
+    if (apiSelectedPersonaId != null) {
+      bool hasAccess = apiSelectedPersonaId == personaId;
+      print("   Using API selection: personaId=$personaId, selectedId=$apiSelectedPersonaId, hasAccess=$hasAccess");
+      return hasAccess;
     }
+
+    // If no selection found anywhere, deny access
+    print("🔴 No selected persona found - denying access");
+    return false;
   }
 
   // Get accessible personas based on subscription status
   Future<List<Personas>> getAccessiblePersonas() async {
     // If user has full subscription access
     if (isActive.value && !isCanceled.value) {
+      print("📋 Returning all personas (full access)");
       return subcriptionData.toList();
     }
     // If user has limited access (canceled subscription or no subscription)
     else {
-      // Get the selected persona ID from onboarding
+      print("📋 Returning only selected persona (limited access)");
+
+      // Get the selected persona ID from TokenStorage (onboarding selection)
       final selectedPersonaId = await TokenStorage.getSelectedPersonaId();
 
       if (selectedPersonaId != null) {
@@ -262,26 +256,32 @@ class UserIsSubcribedController extends GetxController {
         );
 
         if (selectedPersonaFromList != null) {
+          print("   Found selected persona in list: ${selectedPersonaFromList.title}");
           return [selectedPersonaFromList];
         }
       }
 
       // Fallback to API selected persona
       if (selectedPersona.value != null) {
+        print("   Using API selected persona: ${selectedPersona.value!.title}");
         return [selectedPersona.value!];
       }
 
+      print("   No accessible personas found");
       return [];
     }
   }
 
   // Switch selected persona (if allowed)
-  void switchPersona(Personas persona) {
+  Future<void> switchPersona(Personas persona) async {
     if (canSwitch.isTrue) {
       selectedPersona.value = persona;
       // Save to TokenStorage as well
-      TokenStorage.saveSelectedPersonaId(persona.id ?? 0);
+      await TokenStorage.saveSelectedPersonaId(persona.id ?? 0);
+      print("✅ Switched to persona: ${persona.title} (ID: ${persona.id})");
       // Optional: API call to update selection can be placed here.
+    } else {
+      print("❌ Cannot switch persona - switching not allowed");
     }
   }
 

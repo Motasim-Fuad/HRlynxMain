@@ -142,42 +142,45 @@ class HomeView extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
 
-                // Subscription status info (optional)
+                // IMPROVED: Subscription status info with better messaging
                 Obx(() {
-                  if (is_SubcribedController.subscriptionActionMessage.isNotEmpty) {
+                  String statusMessage = '';
+                  Color statusColor = Colors.blue;
+                  IconData statusIcon = Icons.info_outline;
+
+                  if (is_SubcribedController.isActive.value && !is_SubcribedController.isCanceled.value) {
+                    // Full subscription - no message needed
+                    return SizedBox.shrink();
+                  } else if (is_SubcribedController.isCanceled.value) {
+                    // Subscription canceled
+                    statusMessage = 'Subscription canceled - You have access to your selected persona only';
+                    statusColor = Colors.orange;
+                    statusIcon = Icons.warning_amber_rounded;
+                  } else if (!is_SubcribedController.isActive.value) {
+                    // No subscription
+                    statusMessage = 'Free tier - Subscribe to access all AI personas';
+                    statusColor = Colors.blue;
+                    statusIcon = Icons.star_outline;
+                  }
+
+                  if (statusMessage.isNotEmpty) {
                     return Container(
                       margin: EdgeInsets.only(bottom: 16),
                       padding: EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: is_SubcribedController.canReactivateSubscription
-                            ? Colors.orange.shade50
-                            : Colors.blue.shade50,
+                        color: statusColor,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: is_SubcribedController.canReactivateSubscription
-                              ? Colors.orange.shade200
-                              : Colors.blue.shade200,
-                        ),
+                        border: Border.all(color: statusColor),
                       ),
                       child: Row(
                         children: [
-                          Icon(
-                            is_SubcribedController.canReactivateSubscription
-                                ? Icons.info_outline
-                                : Icons.star_outline,
-                            color: is_SubcribedController.canReactivateSubscription
-                                ? Colors.orange.shade600
-                                : Colors.blue.shade600,
-                            size: 20,
-                          ),
+                          Icon(statusIcon, color: statusColor, size: 20),
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              is_SubcribedController.subscriptionActionMessage,
+                              statusMessage,
                               style: TextStyle(
-                                color: is_SubcribedController.canReactivateSubscription
-                                    ? Colors.orange.shade700
-                                    : Colors.blue.shade700,
+                                color: statusColor,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -243,7 +246,7 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  // Build persona grid asynchronously to handle async persona accessibility check
+  // IMPROVED: Build persona grid with better accessibility logic
   Future<List<Widget>> _buildPersonaGrid(
       ChatAllAiPersona controller,
       UserIsSubcribedController is_SubcribedController,
@@ -253,25 +256,43 @@ class HomeView extends StatelessWidget {
 
     for (int index = 0; index < controller.personaList.length; index++) {
       final persona = controller.personaList[index];
+      final personaId = persona.id ?? 0;
 
       // Check if this persona is accessible (await the async method)
-      bool isPersonaActive = await is_SubcribedController.isPersonaAccessible(persona.id ?? 0);
+      bool isPersonaActive = await is_SubcribedController.isPersonaAccessible(personaId);
+
+      print("🎭 Persona ${persona.title} (ID: $personaId) - Active: $isPersonaActive");
 
       personaCards.add(
         GestureDetector(
           onTap: () async {
             if (isPersonaActive) {
+              print("✅ Starting chat for accessible persona: ${persona.title}");
               await controller.startChatSession(persona);
             } else {
-              // Show different messages based on subscription status
-              String title = 'Premium Required';
-              String message = 'Subscribe to access all AI personas';
+              print("❌ Persona not accessible: ${persona.title}");
+
+              // IMPROVED: Show different messages based on subscription status
+              String title = 'Access Restricted';
+              String message = 'This persona is not available';
               Color backgroundColor = Colors.orange;
+              IconData icon = Icons.lock_outline;
 
               if (is_SubcribedController.canReactivateSubscription) {
                 title = 'Reactivate Subscription';
                 message = 'Reactivate your subscription to access all personas';
                 backgroundColor = Colors.blue;
+                icon = Icons.refresh;
+              } else if (!is_SubcribedController.isActive.value) {
+                title = 'Subscribe Required';
+                message = 'Subscribe to access all AI personas';
+                backgroundColor = Colors.purple;
+                icon = Icons.star;
+              } else if (is_SubcribedController.isCanceled.value) {
+                title = 'Limited Access';
+                message = 'Only your selected persona is available after cancellation';
+                backgroundColor = Colors.orange;
+                icon = Icons.person_outline;
               }
 
               Get.snackbar(
@@ -281,20 +302,22 @@ class HomeView extends StatelessWidget {
                 backgroundColor: backgroundColor,
                 colorText: Colors.white,
                 duration: Duration(seconds: 3),
+                icon: Icon(icon, color: Colors.white),
               );
             }
           },
           child: Container(
             decoration: BoxDecoration(
-              color: isPersonaActive ? Colors.white : Colors.grey.shade300,
+              color: isPersonaActive ? Colors.white : Colors.grey.shade200,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isPersonaActive ? Colors.grey.shade300 : Colors.grey.shade400,
+                width: isPersonaActive ? 1 : 2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 4,
+                  color: isPersonaActive ? Colors.black12 : Colors.black.withOpacity(0.05),
+                  blurRadius: isPersonaActive ? 4 : 2,
                   offset: Offset(0, 2),
                 ),
               ],
@@ -324,10 +347,17 @@ class HomeView extends StatelessWidget {
                             color: Colors.grey,
                           ),
                         ),
+                        // IMPROVED: Better overlay for locked personas
                         if (!isPersonaActive)
                           Positioned.fill(
                             child: Container(
-                              color: Colors.black54,
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.7),
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(10),
+                                  topRight: Radius.circular(10),
+                                ),
+                              ),
                               child: Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -335,22 +365,25 @@ class HomeView extends StatelessWidget {
                                     Icon(
                                       is_SubcribedController.canReactivateSubscription
                                           ? Icons.refresh
+                                          : is_SubcribedController.isCanceled.value
+                                          ? Icons.person_outline
                                           : Icons.lock,
                                       color: Colors.white,
-                                      size: 30,
+                                      size: 28,
                                     ),
-                                    if (is_SubcribedController.canReactivateSubscription)
-                                      Padding(
-                                        padding: EdgeInsets.only(top: 4),
-                                        child: Text(
-                                          'Reactivate',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      is_SubcribedController.canReactivateSubscription
+                                          ? 'Reactivate'
+                                          : is_SubcribedController.isCanceled.value
+                                          ? 'Limited'
+                                          : 'Subscribe',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
                                       ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -374,6 +407,28 @@ class HomeView extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                // ADDED: Access indicator
+                // if (!isPersonaActive)
+                //   Container(
+                //     margin: EdgeInsets.only(bottom: 8),
+                //     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                //     decoration: BoxDecoration(
+                //       color: Colors.grey.shade400,
+                //       borderRadius: BorderRadius.circular(10),
+                //     ),
+                //     child: Text(
+                //       is_SubcribedController.canReactivateSubscription
+                //           ? 'Reactivate needed'
+                //           : is_SubcribedController.isCanceled.value
+                //           ? 'Not selected'
+                //           : 'Premium only',
+                //       style: TextStyle(
+                //         fontSize: 8,
+                //         color: Colors.white,
+                //         fontWeight: FontWeight.bold,
+                //       ),
+                //     ),
+                //   ),
               ],
             ),
           ),

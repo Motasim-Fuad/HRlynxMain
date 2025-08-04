@@ -408,6 +408,7 @@ class ProfileView extends StatelessWidget {
     );
   }
 
+// IMPROVED: Updated cancel subscription dialog method for ProfileView
   void _showCancelSubscriptionDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -430,10 +431,39 @@ class ProfileView extends StatelessWidget {
             ),
           ],
         ),
-        content: Text(
-          'Are you sure you want to cancel your subscription? You will lose access to premium personas and only have access to your selected persona.',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16, color: Colors.black54),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Are you sure you want to cancel your subscription?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.black87, fontWeight: FontWeight.w500),
+            ),
+            SizedBox(height: 12),
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.orange.shade600, size: 20),
+                  SizedBox(height: 8),
+                  Text(
+                    'After cancellation, you will only have access to your selected persona from onboarding until your current period ends.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.orange.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
         actions: [
@@ -444,7 +474,7 @@ class ProfileView extends StatelessWidget {
               backgroundColor: Colors.grey.shade200,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: Text("No", style: TextStyle(color: Colors.black87)),
+            child: Text("Keep Subscription", style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500)),
           ),
           TextButton(
             onPressed: () async {
@@ -476,22 +506,36 @@ class ProfileView extends StatelessWidget {
 
                 Get.back(); // Close loading dialog
 
+                // ADDED: Handle persona access changes after cancellation
+                try {
+                  final homeController = Get.find<ChatAllAiPersona>();
+                  await homeController.handleSubscriptionCancellation();
+                  await homeController.refreshAfterSubscriptionChange();
+                } catch (e) {
+                  print("Home controller not found, data will refresh on next visit: $e");
+                }
+
+                // Show success message with more specific information
                 Get.snackbar(
                   'Subscription Cancelled',
-                  'Your subscription has been cancelled. You now have access to your selected persona only.',
+                  'Your subscription has been cancelled. You now have access to your selected persona only until your current period ends.',
                   snackPosition: SnackPosition.TOP,
                   backgroundColor: Colors.orange,
                   colorText: Colors.white,
-                  duration: Duration(seconds: 4),
+                  duration: Duration(seconds: 5),
+                  icon: Icon(Icons.info_outline, color: Colors.white),
                 );
+
               } catch (e) {
                 Get.back(); // Close loading dialog
                 Get.snackbar(
-                    'Error',
-                    'Failed to cancel subscription. Please try again.',
-                    snackPosition: SnackPosition.TOP,
-                    backgroundColor: Colors.red,
-                    colorText: Colors.white
+                  'Error',
+                  'Failed to cancel subscription. Please try again or contact support.',
+                  snackPosition: SnackPosition.TOP,
+                  backgroundColor: Colors.red,
+                  colorText: Colors.white,
+                  duration: Duration(seconds: 4),
+                  icon: Icon(Icons.error, color: Colors.white),
                 );
               }
             },
@@ -500,7 +544,7 @@ class ProfileView extends StatelessWidget {
               backgroundColor: Colors.red,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: Text("Yes, Cancel", style: TextStyle(color: Colors.white)),
+            child: Text("Yes, Cancel", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
