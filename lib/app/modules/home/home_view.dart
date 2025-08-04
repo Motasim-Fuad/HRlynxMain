@@ -141,58 +141,6 @@ class HomeView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-
-                // IMPROVED: Subscription status info with better messaging
-                Obx(() {
-                  String statusMessage = '';
-                  Color statusColor = Colors.blue;
-                  IconData statusIcon = Icons.info_outline;
-
-                  if (is_SubcribedController.isActive.value && !is_SubcribedController.isCanceled.value) {
-                    // Full subscription - no message needed
-                    return SizedBox.shrink();
-                  } else if (is_SubcribedController.isCanceled.value) {
-                    // Subscription canceled
-                    statusMessage = 'Subscription canceled - You have access to your selected persona only';
-                    statusColor = Colors.orange;
-                    statusIcon = Icons.warning_amber_rounded;
-                  } else if (!is_SubcribedController.isActive.value) {
-                    // No subscription
-                    statusMessage = 'Free tier - Subscribe to access all AI personas';
-                    statusColor = Colors.blue;
-                    statusIcon = Icons.star_outline;
-                  }
-
-                  if (statusMessage.isNotEmpty) {
-                    return Container(
-                      margin: EdgeInsets.only(bottom: 16),
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: statusColor,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: statusColor),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(statusIcon, color: statusColor, size: 20),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              statusMessage,
-                              style: TextStyle(
-                                color: statusColor,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  return SizedBox.shrink();
-                }),
-
                 // Persona Grid
                 Obx(() {
                   if (controller.isLoading.value) {
@@ -407,28 +355,6 @@ class HomeView extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                // ADDED: Access indicator
-                // if (!isPersonaActive)
-                //   Container(
-                //     margin: EdgeInsets.only(bottom: 8),
-                //     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                //     decoration: BoxDecoration(
-                //       color: Colors.grey.shade400,
-                //       borderRadius: BorderRadius.circular(10),
-                //     ),
-                //     child: Text(
-                //       is_SubcribedController.canReactivateSubscription
-                //           ? 'Reactivate needed'
-                //           : is_SubcribedController.isCanceled.value
-                //           ? 'Not selected'
-                //           : 'Premium only',
-                //       style: TextStyle(
-                //         fontSize: 8,
-                //         color: Colors.white,
-                //         fontWeight: FontWeight.bold,
-                //       ),
-                //     ),
-                //   ),
               ],
             ),
           ),

@@ -463,90 +463,92 @@ class ProfileView extends StatelessWidget {
                 ],
               ),
             ),
-          ],
-        ),
-        actionsAlignment: MainAxisAlignment.spaceEvenly,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              backgroundColor: Colors.grey.shade200,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: Text("Keep Subscription", style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500)),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(context).pop(); // Close dialog
+            SizedBox(height: 20,),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop(); // Close dialog
 
-              // Show loading indicator
-              Get.dialog(
-                Center(
-                  child: Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
-                          Text('Cancelling subscription...'),
-                        ],
+                // Show loading indicator
+                Get.dialog(
+                  Center(
+                    child: Card(
+                      child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16),
+                            Text('Cancelling subscription...'),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                barrierDismissible: false,
-              );
+                  barrierDismissible: false,
+                );
 
-              try {
-                // Cancel subscription
-                await subController.cancelSubscription();
-
-                Get.back(); // Close loading dialog
-
-                // ADDED: Handle persona access changes after cancellation
                 try {
-                  final homeController = Get.find<ChatAllAiPersona>();
-                  await homeController.handleSubscriptionCancellation();
-                  await homeController.refreshAfterSubscriptionChange();
+                  // Cancel subscription
+                  await subController.cancelSubscription();
+
+                 // Close loading dialog
+
+                  // ADDED: Handle persona access changes after cancellation
+                  try {
+                    final homeController = Get.find<ChatAllAiPersona>();
+                    await homeController.handleSubscriptionCancellation();
+                    await homeController.refreshAfterSubscriptionChange();
+                  } catch (e) {
+                    print("Home controller not found, data will refresh on next visit: $e");
+                  }
+
+                  // Show success message with more specific information
+                  Get.snackbar(
+                    'Subscription Cancelled',
+                    'Your subscription has been cancelled. You now have access to your selected persona only until your current period ends.',
+                    snackPosition: SnackPosition.TOP,
+                    backgroundColor: Colors.orange,
+                    colorText: Colors.white,
+                    duration: Duration(seconds: 5),
+                    icon: Icon(Icons.info_outline, color: Colors.white),
+                  );
+
+                  Get.back();
+
                 } catch (e) {
-                  print("Home controller not found, data will refresh on next visit: $e");
+                  Get.back(); // Close loading dialog
+                  Get.snackbar(
+                    'Error',
+                    'Failed to cancel subscription. Please try again or contact support.',
+                    snackPosition: SnackPosition.TOP,
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                    duration: Duration(seconds: 4),
+                    icon: Icon(Icons.error, color: Colors.white),
+                  );
                 }
-
-                // Show success message with more specific information
-                Get.snackbar(
-                  'Subscription Cancelled',
-                  'Your subscription has been cancelled. You now have access to your selected persona only until your current period ends.',
-                  snackPosition: SnackPosition.TOP,
-                  backgroundColor: Colors.orange,
-                  colorText: Colors.white,
-                  duration: Duration(seconds: 5),
-                  icon: Icon(Icons.info_outline, color: Colors.white),
-                );
-
-              } catch (e) {
-                Get.back(); // Close loading dialog
-                Get.snackbar(
-                  'Error',
-                  'Failed to cancel subscription. Please try again or contact support.',
-                  snackPosition: SnackPosition.TOP,
-                  backgroundColor: Colors.red,
-                  colorText: Colors.white,
-                  duration: Duration(seconds: 4),
-                  icon: Icon(Icons.error, color: Colors.white),
-                );
-              }
-            },
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              },
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text("Yes, Cancel", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
-            child: Text("Yes, Cancel", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
+            SizedBox(height: 20,),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                backgroundColor: Colors.green,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text("Keep Subscription", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+            ),
+          ],
+        ),
+
       ),
     );
   }
