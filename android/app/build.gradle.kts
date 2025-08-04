@@ -43,11 +43,6 @@ android {
         }
     }
 }
-//new added for me
-//dependencies {
-//    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.10")
-//    implementation("androidx.multidex:multidex:2.0.1")  // Add this for Stripe
-//}
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10")
@@ -63,6 +58,11 @@ dependencies {
     // Required for FlutterFragmentActivity
     implementation("androidx.lifecycle:lifecycle-process:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+
+    // ✅ Google Pay and Google Play Services dependencies
+    implementation("com.google.android.gms:play-services-wallet:19.2.1")
+    implementation("com.google.android.gms:play-services-base:18.3.0")
+    implementation("com.google.android.gms:play-services-tasks:18.0.2")
 }
 
 flutter {

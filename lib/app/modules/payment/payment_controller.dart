@@ -133,7 +133,7 @@ class PaymentController extends GetxController {
       print('📋 Step 1: Checking subscription status...');
       final statusResponse = await _checkSubscriptionStatus();
       if (statusResponse?['data']?['is_active'] == true ||
-          statusResponse?['data']?['is_trial_active'] == true) {
+          statusResponse?['data']?['is_trial_active'] == true ) {
         print('✅ User already has active subscription/trial');
         Get.off(() => CongratulationView());
         return;
@@ -254,9 +254,20 @@ class PaymentController extends GetxController {
     }
 
     try {
+      // google pay -------
+
+      var gpay = const PaymentSheetGooglePay(
+        merchantCountryCode: "US", // or your actual country
+        currencyCode: "USD",
+        testEnv: true, // Set true for development testing
+
+      );
+
+
       // Initialize payment sheet
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
+          googlePay: gpay,
           setupIntentClientSecret: _clientSecret!,
           merchantDisplayName: 'Explorer Pro',
           style: ThemeMode.dark,

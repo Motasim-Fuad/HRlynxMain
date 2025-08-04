@@ -1,5 +1,8 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
 import '../api_Constant.dart';
 import '../neteork_api_services.dart';
 import '../token.dart';
@@ -272,6 +275,36 @@ class AuthRepository {
     }
   }
 
+
+  // Add this updated method to your AuthRepository class
+
+  Future<dynamic> cancelSubscription() async {
+    try {
+      String url = "${ApiConstants.baseUrl}/api/subscription/cancel/";
+      print('🔗 Cancelling subscription: $url');
+
+      final response = await NetworkApiServices.postApi(
+        url,
+        {}, // Empty body or add if required
+        withAuth: true,
+        tokenType: 'login',
+      );
+
+      if (response != null) {
+        print('✅ Cancel subscription response: $response');
+        // Don't show snackbar here - let the controller handle UI feedback
+        return response;
+      }
+
+      return response;
+    } catch (e) {
+      print('❌ Error cancelling subscription: $e');
+      // Don't show snackbar here - let the controller handle error feedback
+      rethrow; // Re-throw the error so controller can handle it
+    }
+  }
+
+
   Future<dynamic> addPaymentMethod(String paymentMethodId) async {
     try {
       String url = "${ApiConstants.baseUrl}/api/subscription/payment/add-method/";
@@ -375,17 +408,6 @@ class AuthRepository {
       return null;
     }
   }
-
-  Future<dynamic> cancelSubscription() async {
-    try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/cancel/";
-      return await NetworkApiServices.postApi(url, {}, withAuth: true, tokenType: 'login');
-    } catch (e) {
-      print('❌ Error canceling subscription: $e');
-      return null;
-    }
-  }
-
 
 
   Future<dynamic> fetchUserIsSubcribed() async {
