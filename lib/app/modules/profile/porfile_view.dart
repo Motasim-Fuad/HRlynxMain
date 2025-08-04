@@ -492,7 +492,7 @@ class ProfileView extends StatelessWidget {
                   // Cancel subscription
                   await subController.cancelSubscription();
 
-                 // Close loading dialog
+                  // Close loading dialog
 
                   // ADDED: Handle persona access changes after cancellation
                   try {
