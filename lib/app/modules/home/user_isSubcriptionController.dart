@@ -120,7 +120,7 @@ class UserIsSubcribedController extends GetxController {
     }
   }
 
-  // Cancel subscription method
+  // IMPROVED: Cancel subscription method with immediate UI update
   Future<void> cancelSubscription() async {
     try {
       print("🔄 Cancelling subscription...");
@@ -130,16 +130,32 @@ class UserIsSubcribedController extends GetxController {
       if (response != null && response['success'] == true) {
         print("✅ Subscription cancelled successfully");
 
-        // Update local state immediately after successful cancellation
+        // FIXED: Update local state immediately after successful cancellation
+        // This ensures UI updates instantly without waiting for API refresh
         isCanceled.value = true;
-        isSubscribed.value = false; // User should now have limited access
+        isSubscribed.value = false; // User now has limited access
         showReactivateButton.value = true;
+        hasPremiumAccess.value = false; // No premium access after cancellation
 
-        // Re-check subscription status to get the latest state
-        await checkAndUpdateSubscriptionStatus();
+        // Keep isActive as true since subscription might still be in grace period
+        // The API will provide the correct value in the next refresh
 
-        print("   isSubscribed after cancellation: ${isSubscribed.value}");
+        print("🔄 Immediate UI state updated after cancellation:");
+        print("   isSubscribed: ${isSubscribed.value}");
         print("   isCanceled: ${isCanceled.value}");
+        print("   showReactivateButton: ${showReactivateButton.value}");
+
+        // Force UI update
+        update();
+
+        // Re-check subscription status to sync with server (but don't wait for it)
+        // This happens in background and will update any remaining fields
+        Future.delayed(Duration(milliseconds: 500), () {
+          checkAndUpdateSubscriptionStatus();
+        });
+
+      } else {
+        throw Exception('API returned unsuccessful response');
       }
     } catch (e) {
       print("❌ Error cancelling subscription: $e");
@@ -147,7 +163,7 @@ class UserIsSubcribedController extends GetxController {
     }
   }
 
-  // Reactivate subscription method
+  // IMPROVED: Reactivate subscription method with immediate UI update
   Future<bool> reactivateSubscription() async {
     try {
       print("🔄 Reactivating subscription...");
@@ -157,24 +173,33 @@ class UserIsSubcribedController extends GetxController {
       if (response != null && response['success'] == true) {
         print("✅ Subscription reactivated successfully");
 
-        // Update local state immediately after successful reactivation
+        // FIXED: Update local state immediately after successful reactivation
+        // This ensures UI updates instantly without waiting for API refresh
         isCanceled.value = false;
         isActive.value = true;
-        isSubscribed.value = true; // User should now have full access
+        isSubscribed.value = true; // User now has full access
         showReactivateButton.value = false;
         hasPremiumAccess.value = true;
 
-        // Re-check subscription status to get the latest state from server
-        await checkAndUpdateSubscriptionStatus();
-
-        print("   isSubscribed after reactivation: ${isSubscribed.value}");
+        print("🔄 Immediate UI state updated after reactivation:");
+        print("   isSubscribed: ${isSubscribed.value}");
         print("   isCanceled: ${isCanceled.value}");
         print("   isActive: ${isActive.value}");
         print("   hasPremiumAccess: ${hasPremiumAccess.value}");
+        print("   showReactivateButton: ${showReactivateButton.value}");
+
+        // Force UI update
+        update();
+
+        // Re-check subscription status to sync with server (but don't wait for it)
+        // This happens in background to ensure all data is perfectly synced
+        Future.delayed(Duration(milliseconds: 500), () {
+          checkAndUpdateSubscriptionStatus();
+        });
 
         return true;
       } else {
-        print("❌ Failed to reactivate subscription");
+        print("❌ Failed to reactivate subscription - API response unsuccessful");
         return false;
       }
     } catch (e) {
