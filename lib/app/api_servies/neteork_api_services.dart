@@ -199,13 +199,47 @@ class NetworkApiServices {
     }
   }
 
-  /// Handle API responses with improved error handling
+  /// Add retry mechanism for CloudFlare issues
+  static Future<dynamic> getApiWithRetry(
+      String url, {
+        bool withAuth = true,
+        String tokenType = 'login',
+        int maxRetries = 3,
+        Duration retryDelay = const Duration(seconds: 2),
+      }) async {
+    for (int attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        final headers = await getHeaders(withAuth: withAuth, tokenType: tokenType);
+        final response = await http.get(Uri.parse(url), headers: headers);
+        return _handleResponse(response);
+      } catch (e) {
+        print('🔄 Attempt $attempt failed: $e');
+
+        if (attempt == maxRetries) {
+          rethrow; // Last attempt, throw the error
+        }
+
+        // Only retry for CloudFlare/network issues
+        if (e.toString().contains('CloudFlare') ||
+            e.toString().contains('523') ||
+            e.toString().contains('tunnel') ||
+            e.toString().contains('HTML instead of JSON')) {
+          print('⏳ Retrying in ${retryDelay.inSeconds} seconds...');
+          await Future.delayed(retryDelay);
+        } else {
+          rethrow; // Don't retry for other errors
+        }
+      }
+    }
+  }
+
+
   static dynamic _handleResponse(http.Response response) {
     print('🔎 Response Code: ${response.statusCode}');
     print('📦 Raw Response Body: ${response.body}');
 
     try {
-      // Handle empty responses for successful requests
+      // Handle successful responses
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) {
           return {'success': true, 'message': 'Request completed successfully'};
@@ -213,14 +247,34 @@ class NetworkApiServices {
         return jsonDecode(response.body);
       }
 
-      // Handle error responses
+      // Handle CloudFlare specific errors
+      if (response.statusCode == 523) {
+        throw Exception('Server temporarily unavailable (CloudFlare tunnel down). Please try again later.');
+      }
+
+      if (response.statusCode >= 520 && response.statusCode <= 530) {
+        throw Exception('CloudFlare error (${response.statusCode}). Please check your internet connection and try again.');
+      }
+
+      // Check if response is HTML (CloudFlare error page)
+      if (response.body.trim().startsWith('<!DOCTYPE html>') ||
+          response.body.trim().startsWith('<html')) {
+        throw Exception('Server error: Received HTML instead of JSON. Please try again later.');
+      }
+
+      // Handle other error responses
       if (response.body.isNotEmpty) {
-        final responseBody = jsonDecode(response.body);
-        final errorMsg = responseBody['message'] ??
-            responseBody['detail'] ??
-            responseBody['error'] ??
-            'Unknown error (${response.statusCode})';
-        throw Exception('API Error: $errorMsg');
+        try {
+          final responseBody = jsonDecode(response.body);
+          final errorMsg = responseBody['message'] ??
+              responseBody['detail'] ??
+              responseBody['error'] ??
+              'Unknown error (${response.statusCode})';
+          throw Exception('API Error: $errorMsg');
+        } catch (jsonError) {
+          // If JSON parsing fails, it might be HTML error page
+          throw Exception('Server error (${response.statusCode}). Please try again later.');
+        }
       } else {
         throw Exception('API Error: ${response.statusCode} - ${response.reasonPhrase}');
       }
@@ -231,6 +285,39 @@ class NetworkApiServices {
       throw FormatException('Unexpected response format: ${response.body}');
     }
   }
+
+  /// Handle API responses with improved error handling
+  // static dynamic _handleResponse(http.Response response) {
+  //   print('🔎 Response Code: ${response.statusCode}');
+  //   print('📦 Raw Response Body: ${response.body}');
+  //
+  //   try {
+  //     // Handle empty responses for successful requests
+  //     if (response.statusCode >= 200 && response.statusCode < 300) {
+  //       if (response.body.isEmpty) {
+  //         return {'success': true, 'message': 'Request completed successfully'};
+  //       }
+  //       return jsonDecode(response.body);
+  //     }
+  //
+  //     // Handle error responses
+  //     if (response.body.isNotEmpty) {
+  //       final responseBody = jsonDecode(response.body);
+  //       final errorMsg = responseBody['message'] ??
+  //           responseBody['detail'] ??
+  //           responseBody['error'] ??
+  //           'Unknown error (${response.statusCode})';
+  //       throw Exception('API Error: $errorMsg');
+  //     } else {
+  //       throw Exception('API Error: ${response.statusCode} - ${response.reasonPhrase}');
+  //     }
+  //   } catch (e) {
+  //     if (e is Exception) {
+  //       rethrow;
+  //     }
+  //     throw FormatException('Unexpected response format: ${response.body}');
+  //   }
+  // }
 
   /// Helper method for handling common HTTP status codes
   static bool isSuccessResponse(int statusCode) {

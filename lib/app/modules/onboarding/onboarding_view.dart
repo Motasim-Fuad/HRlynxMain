@@ -33,10 +33,54 @@ class OnboardingView extends StatelessWidget {
                 color: Color(0xFF2B2323),
               ),
             ),
+            // Update your OnboardingView build method
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text("Loading personas..."),
+                      ],
+                    ),
+                  );
+                }
+
+                if (controller.personaList.isEmpty && controller.errorMessage.value.isNotEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.grey[400],
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          controller.errorMessage.value,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: controller.retryFetchPersonas,
+                          icon: Icon(Icons.refresh),
+                          label: Text("Retry"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primarycolor,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
                 }
 
                 if (controller.personaList.isEmpty) {
@@ -49,7 +93,6 @@ class OnboardingView extends StatelessWidget {
                   physics: const BouncingScrollPhysics(),
                   itemBuilder: (context, index) {
                     Data persona = controller.personaList[index];
-
                     final image = persona.avatar ?? '';
 
                     return Obx(

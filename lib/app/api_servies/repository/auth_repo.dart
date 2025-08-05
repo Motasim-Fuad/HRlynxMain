@@ -13,7 +13,27 @@ class AuthRepository {
   // ---------- Persona ----------
   Future<dynamic> getParsonaType() async {
     String url = "${ApiConstants.baseUrl}/api/aipersona/personas/";
-    return await NetworkApiServices.getApi(url, withAuth: false);
+
+    try {
+      // Use the retry mechanism for CloudFlare issues
+      return await NetworkApiServices.getApiWithRetry(
+        url,
+        withAuth: false,
+        maxRetries: 3,
+        retryDelay: Duration(seconds: 3),
+      );
+    } catch (e) {
+      print('❌ Final error after retries: $e');
+
+      // Provide user-friendly error message
+      if (e.toString().contains('CloudFlare') ||
+          e.toString().contains('523') ||
+          e.toString().contains('tunnel')) {
+        throw Exception('Connection issue detected. Please check your internet connection and try again.');
+      }
+
+      rethrow;
+    }
   }
 
   Future<dynamic> setParsonaType(Map<String, dynamic> body) async {
